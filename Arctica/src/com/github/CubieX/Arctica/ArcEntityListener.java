@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 public class ArcEntityListener implements Listener
 {
@@ -50,6 +51,12 @@ They are called in the following order
   //================================================================================================
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
     public void onPlayerJoin(PlayerJoinEvent event)
+    {
+     
+    }
+    
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
+    public void onPlayerMove(PlayerMoveEvent event)
     {
      
     }

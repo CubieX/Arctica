@@ -40,7 +40,7 @@ public class ArcCommandHandler implements CommandExecutor
             {
                 if (args[0].equalsIgnoreCase("version")) // show the current version of the plugin
                 {            
-                    sender.sendMessage(ChatColor.GREEN + "This server is running " + plugin.getDescription().getName() + " " + plugin.getDescription().getVersion());
+                    sender.sendMessage(ChatColor.AQUA + "This server is running " + plugin.getDescription().getName() + " " + plugin.getDescription().getVersion());
                 }    
 
                 if (args[0].equalsIgnoreCase("reload")) // reload the plugins config and playerfile

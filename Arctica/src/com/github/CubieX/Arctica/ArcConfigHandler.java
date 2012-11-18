@@ -45,6 +45,6 @@ public class ArcConfigHandler
         plugin.reloadConfig();
         config = plugin.getConfig(); // new assignment neccessary when returned value is assigned to a variable or static field(!)
 
-        sender.sendMessage("[" + ChatColor.GREEN + "Info" + ChatColor.WHITE + "] " + ChatColor.GREEN + plugin.getDescription().getName() + " " + plugin.getDescription().getVersion() + " reloaded!");       
+        sender.sendMessage("[" + ChatColor.AQUA + "Info" + ChatColor.WHITE + "] " + ChatColor.AQUA + plugin.getDescription().getName() + " " + plugin.getDescription().getVersion() + " reloaded!");       
     } 
 }
