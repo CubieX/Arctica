@@ -1,6 +1,7 @@
 name: Arctica
 main: com.github.CubieX.Arctica.Acrtica
 version: 0.1
+authors: [CubieX]
 description: Adventure game to survive in arctic ice
 
 commands:
