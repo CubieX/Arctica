@@ -1,0 +1,20 @@
+name: Arctica
+main: com.github.CubieX.Arctica.Acrtica
+version: 0.1
+description: Adventure game to survive in arctic ice
+
+commands:
+    arc:
+      description: Using Arctica
+      usage: /arc version | reload
+
+permissions:    
+    arctica.use:
+        description: Allows beeing affected by Arctica
+        default: op
+    arctica.immune:
+        description: Makes the player immune to all Artica effects
+        default: op
+    arctica.admin:
+        description: Allows reloading the plugin and all other commands.
+        default: op

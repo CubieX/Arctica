@@ -1,0 +1,6 @@
+#do NOT change the config version!
+config_version: '1'
+#set locale for user dialog messages
+language: de
+#enable debug output
+debug: false
