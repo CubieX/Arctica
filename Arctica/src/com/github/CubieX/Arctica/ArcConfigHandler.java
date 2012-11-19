@@ -1,15 +1,10 @@
 package com.github.CubieX.Arctica;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 
 public class ArcConfigHandler
 {
@@ -43,8 +38,9 @@ public class ArcConfigHandler
     public void reloadConfig(CommandSender sender)
     {
         plugin.reloadConfig();
-        config = plugin.getConfig(); // new assignment neccessary when returned value is assigned to a variable or static field(!)
-
+        config = plugin.getConfig(); // new assignment necessary when returned value is assigned to a variable or static field(!)
+        plugin.readConfigValues();
+        
         sender.sendMessage("[" + ChatColor.AQUA + "Info" + ChatColor.WHITE + "] " + ChatColor.AQUA + plugin.getDescription().getName() + " " + plugin.getDescription().getVersion() + " reloaded!");       
     } 
 }

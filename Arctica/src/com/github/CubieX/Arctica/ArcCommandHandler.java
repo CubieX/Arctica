@@ -3,6 +3,7 @@ package com.github.CubieX.Arctica;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -53,7 +54,23 @@ public class ArcCommandHandler implements CommandExecutor
                     {
                         sender.sendMessage(ChatColor.RED + "You du not have sufficient permission to reload " + plugin.getDescription().getName() + "!");
                     }
-                }                
+                } 
+
+                if (args[0].equalsIgnoreCase("status")) // shows the most important config options
+                {            
+                    if(sender.hasPermission("arctica.use"))
+                    {     
+                        sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Safe Mode: " + ChatColor.WHITE + Arctica.safemode); 
+                        if (null != sender)
+                        {
+                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Biome: " + ChatColor.WHITE + player.getWorld().getBiome((int)player.getLocation().getX(), (int)player.getLocation().getZ()).toString());   
+                        }
+                    }
+                    else
+                    {
+                        sender.sendMessage(ChatColor.RED + "You du not have sufficient permission to show " + plugin.getDescription().getName() + " status!");
+                    }
+                } 
                 return true;
             }
 
