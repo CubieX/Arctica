@@ -3,7 +3,6 @@ package com.github.CubieX.Arctica;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -107,7 +106,7 @@ public class ArcCommandHandler implements CommandExecutor
             }            
             else
             {
-                sender.sendMessage(ChatColor.YELLOW + plugin.logPrefix + "Falsche Anzahl an Parametern.");
+                sender.sendMessage(ChatColor.YELLOW + Arctica.logPrefix + "Falsche Anzahl an Parametern.");
             }  
         }         
         return false; // No valid parameter count. If false is returned, the help for the command stated in the plugin.yml will be displayed to the player

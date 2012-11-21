@@ -1,6 +1,6 @@
 package com.github.CubieX.Arctica;
 
-import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 
@@ -41,24 +41,25 @@ public class ArcSchedulerHandler
                                     (currPlayersBiome == Biome.TAIGA) ||
                                     (currPlayersBiome == Biome.TAIGA_HILLS))                               
                             {   
-                                // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
-                                int realDamageToApply = (int)Math.ceil((Arctica.dps_air * (1 - plugin.getDamageReduceFactor(currPlayer))));
+                                int realDamageToApply = 0;
                                 
-                                if(Arctica.safemode)
+                                // check if player is currently in water
+                                Material mat = currPlayer.getLocation().getBlock().getType();
+                                if (mat == Material.STATIONARY_WATER || mat == Material.WATER)
                                 {
-                                    if(currPlayer.getHealth() > realDamageToApply)
-                                    {
-                                        currPlayer.damage(realDamageToApply);
-                                    }
-                                    else
-                                    {
-                                        currPlayer.setHealth(1);
-                                    }
+                                    // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
+                                    realDamageToApply = (int)Math.ceil((Arctica.dps_water * (1.0 - plugin.getDamageReduceFactor(currPlayer))));
                                 }
                                 else
                                 {
-                                    currPlayer.damage(realDamageToApply);
+                                    // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
+                                    realDamageToApply = (int)Math.ceil((Arctica.dps_air * (1.0 - plugin.getDamageReduceFactor(currPlayer))));
                                 }
+
+                                // fire custom damage event ================================================                                
+                                ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event                                
+                                plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
+                                //==========================================================================
                                 //currPlayer.sendMessage(ChatColor.AQUA + "Du frierst.");
                             }
                         }

@@ -7,6 +7,6 @@ debug: false
 # enable safe mode (players will not die from cold. Only for testing!)
 safemode: false
 # damage per second when outside in a cold biome (0-20)
-dps_air: 1
-# damage per second when outside and in ice water
-dps_water: 3 (0-20)
+dps_air: 2
+# damage per second when outside and in ice water (0-20)
+dps_water: 9
