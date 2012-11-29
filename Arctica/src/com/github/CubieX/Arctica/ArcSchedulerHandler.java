@@ -29,6 +29,7 @@ public class ArcSchedulerHandler
 
     /* These Blocks will be accepted as suitable for building a safe shelter
      * that grants the "Indoor" bonus against the cold */
+    // TODO make configurable via plugin config (sub-tree that is beeing read)
     void initCraftedBlocksIDlist()
     {
         craftedBlocksIDlist.add(1);
