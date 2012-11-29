@@ -2,6 +2,7 @@ package com.github.CubieX.Arctica;
 
 import java.util.logging.Logger;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,9 +25,9 @@ public class ArcEntityListener implements Listener
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     /*
-   Event Priorities
+    Event Priorities
 
-There are six priorities in Bukkit
+    There are six priorities in Bukkit
 
     EventPriority.HIGHEST
     EventPriority.HIGH
@@ -35,7 +36,7 @@ There are six priorities in Bukkit
     EventPriority.LOWEST
     EventPriority.MONITOR 
 
-They are called in the following order
+    They are called in the following order
 
     EventPriority.LOWEST 
     EventPriority.LOW
@@ -55,13 +56,29 @@ They are called in the following order
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
     public void onPlayerJoin(PlayerJoinEvent event)
     {
+        try
+        {
 
+        }
+        catch(Exception ex)
+        {
+            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
+            // player is probably no longer online 
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
     public void onPlayerMove(PlayerMoveEvent event)
     {
-        
+        try
+        {
+
+        }
+        catch(Exception ex)
+        {
+            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
+            // player is probably no longer online 
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
@@ -69,32 +86,58 @@ They are called in the following order
     {
         Player victim = null;
         int damageToApply = event.getDamageToApply();
-       
-        if(null != event.getAfflictedPlayer())
-        {
-            if(event.getAfflictedPlayer() instanceof Player)
-            {
-                victim = event.getAfflictedPlayer();
 
-                if((victim.getHealth() - damageToApply) >= 1)
+        try
+        {
+            if(null != event.getAfflictedPlayer())
+            {
+                if(event.getAfflictedPlayer() instanceof Player)
                 {
-                    victim.setHealth(victim.getHealth() - damageToApply);
-                }
-                else if(Arctica.safemode)
-                {
-                    victim.setHealth(1);
-                }
-                else
-                {            
-                    victim.setHealth(0);
-                }
-            }            
+                    victim = event.getAfflictedPlayer();
+                                        
+                    if((victim.getHealth() - damageToApply) >= 1)
+                    {
+                        victim.setHealth(victim.getHealth() - damageToApply);
+                    }
+                    else if(Arctica.safemode)
+                    {
+                        victim.setHealth(1);
+                    }
+                    else
+                    {            
+                        victim.setHealth(0);
+                    }
+                }            
+            }
+        }
+        catch(Exception ex)
+        {
+            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
+            // player is probably no longer online 
         }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
-    public void onPlayerDamage(EntityDamageEvent event)
+    public void onEntityDamage(EntityDamageEvent event)
     {        
-        
+        Player player = null;
+
+        try
+        {
+            if(event.getEntity() instanceof Player)
+            {
+                player = (Player) event.getEntity();
+            }
+
+            if(null != player)
+            {
+                if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "EntityDamageEvent für dich wurde getriggert.");
+            } 
+        }
+        catch(Exception ex)
+        {
+            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
+            // player is probably no longer online 
+        }        
     }
 }

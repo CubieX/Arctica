@@ -59,10 +59,16 @@ public class ArcCommandHandler implements CommandExecutor
                 {            
                     if(sender.hasPermission("arctica.use"))
                     {     
-                        sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Safe Mode: " + ChatColor.WHITE + Arctica.safemode); 
+                        
                         if (null != sender)
                         {
-                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Biome: " + ChatColor.WHITE + player.getWorld().getBiome((int)player.getLocation().getX(), (int)player.getLocation().getZ()).toString());   
+                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Debug-Info-Mode: " + ChatColor.WHITE + Arctica.debug);
+                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Safe Mode: " + ChatColor.WHITE + Arctica.safemode);                             
+                            
+                            if(null != player)
+                            {
+                                player.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Biome: " + ChatColor.WHITE + player.getWorld().getBiome((int)player.getLocation().getX(), (int)player.getLocation().getZ()).toString());
+                            }
                         }
                     }
                     else

@@ -16,9 +16,15 @@ public class Arctica extends JavaPlugin
 
     static final Logger log = Logger.getLogger("Minecraft");
     static String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
+    static boolean debug = false;
     static boolean safemode = false;
-    static int dps_air = 0;
-    static int dps_water = 0;
+    static int damageApplyPeriod = 10;
+    static int baseDamageInAir = 0;
+    static int extraDamageInAirWhenOutside = 0;
+    static int baseDamageInWater = 0;    
+    static int extraDamageInWaterWhenOutside = 0;
+    static int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)
+    final static int maxMapHeight = 255;
 
     //************************************************
     static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
@@ -89,21 +95,30 @@ public class Arctica extends JavaPlugin
     }
 
     public void readConfigValues()
-    {
-        if(this.getConfig().getString("safemode").equalsIgnoreCase("true"))
-        {
-            safemode = true;
-        }
-        else        
-        {
-            safemode = false;
-        }
+    {               
+        debug = this.getConfig().getBoolean("debug");
+        
+        safemode = this.getConfig().getBoolean("safemode");
 
-        dps_air = this.getConfig().getInt("dps_air");
-        if(Arctica.dps_air > 20) dps_air = 20;
+        damageApplyPeriod = this.getConfig().getInt("damageApplyPeriod");
+        if(Arctica.damageApplyPeriod > 60) damageApplyPeriod = 60;
+        if(Arctica.damageApplyPeriod < 5) damageApplyPeriod = 5;
 
-        dps_water = this.getConfig().getInt("dps_water");
-        if(dps_water > 20) dps_water = 20;
+        baseDamageInAir = this.getConfig().getInt("baseDamageInAir");
+        if(Arctica.baseDamageInAir > 20) baseDamageInAir = 20;
+        if(Arctica.baseDamageInAir < 0) baseDamageInAir = 0;
+        
+        baseDamageInWater = this.getConfig().getInt("baseDamageInWater");
+        if(baseDamageInWater > 20) baseDamageInWater = 20;
+        if(baseDamageInWater < 0) baseDamageInWater = 0;
+
+        extraDamageInAirWhenOutside = this.getConfig().getInt("extraDamageInAirWhenOutside");
+        if(extraDamageInAirWhenOutside > 20) extraDamageInAirWhenOutside = 20;
+        if(extraDamageInAirWhenOutside < 0) extraDamageInAirWhenOutside = 0;
+
+        extraDamageInWaterWhenOutside = this.getConfig().getInt("extraDamageInWaterWhenOutside");
+        if(extraDamageInWaterWhenOutside > 20) extraDamageInWaterWhenOutside = 20;
+        if(extraDamageInWaterWhenOutside < 0) extraDamageInWaterWhenOutside = 0;
     }
 
     // Calculates the factor for damage reduction from players worn armor

@@ -6,7 +6,17 @@ language: de
 debug: false
 # enable safe mode (players will not die from cold. Only for testing!)
 safemode: false
-# damage per second when outside in a cold biome (0-20)
-dps_air: 2
-# damage per second when outside and in ice water (0-20)
-dps_water: 9
+# time in seconds to apply the cold damage to players periodically (5-60)
+damageApplyPeriod: 10
+# base damage per cold damage application when in a cold biome in air
+# wether inside or outside (0-20)
+baseDamageInAir: 2
+# base damage per cold damage application when in a cold biome in water
+# wether inside or outside (0-20)
+baseDamageInWater: 5
+# additional damage for each cold damage application when being outside
+# in air (will be added to base damage in air) (0-20)
+extraDamageInAirWhenOutside: 2
+# additional damage for each cold damage application when being outside
+# in water (will be added to base damage in water) (0-20)
+extraDamageInWaterWhenOutside: 4
