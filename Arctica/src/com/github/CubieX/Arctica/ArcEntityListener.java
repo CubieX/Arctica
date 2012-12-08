@@ -52,35 +52,7 @@ public class ArcEntityListener implements Listener
     The option "ignoreCancelled" if set to "true" says, that the plugin will not get this event if it has been cancelled beforehand from another plugin.
      */
 
-    //================================================================================================
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
-    public void onPlayerJoin(PlayerJoinEvent event)
-    {
-        try
-        {
-
-        }
-        catch(Exception ex)
-        {
-            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
-            // player is probably no longer online 
-        }
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
-    public void onPlayerMove(PlayerMoveEvent event)
-    {
-        try
-        {
-
-        }
-        catch(Exception ex)
-        {
-            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
-            // player is probably no longer online 
-        }
-    }
-
+    //================================================================================================    
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
     public void onColdDamage(ColdDamageEvent event)
     {
@@ -115,29 +87,5 @@ public class ArcEntityListener implements Listener
             Arctica.log.info(Arctica.logPrefix + ex.getMessage());
             // player is probably no longer online 
         }
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
-    public void onEntityDamage(EntityDamageEvent event)
-    {        
-        Player player = null;
-
-        try
-        {
-            if(event.getEntity() instanceof Player)
-            {
-                player = (Player) event.getEntity();
-            }
-
-            if(null != player)
-            {
-                if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "EntityDamageEvent für dich wurde getriggert.");
-            } 
-        }
-        catch(Exception ex)
-        {
-            Arctica.log.info(Arctica.logPrefix + ex.getMessage());
-            // player is probably no longer online 
-        }        
-    }
+    }    
 }

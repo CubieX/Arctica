@@ -25,6 +25,9 @@ public class Arctica extends JavaPlugin
     static int extraDamageInWaterWhenOutside = 0;
     static int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)
     final static int maxMapHeight = 255;
+    final static int horizontalWarmBlockSearchRadius = 5;
+    final static int verticalWarmBlockSearchRadius = 3;
+    final static double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
 
     //************************************************
     static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
@@ -122,7 +125,7 @@ public class Arctica extends JavaPlugin
     }
 
     // Calculates the factor for damage reduction from players worn armor
-    public double getDamageReduceFactor(Player player)
+    public double getDamageReduceFactorFromCloth(Player player)
     {
         org.bukkit.inventory.PlayerInventory inv = player.getInventory();
         ItemStack boots = inv.getBoots();

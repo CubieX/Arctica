@@ -19,12 +19,14 @@ public class ArcSchedulerHandler
     private Arctica plugin = null;
 
     ArrayList<Integer> craftedBlocksIDlist = new ArrayList<Integer>();
+    ArrayList<Integer> warmBlocksIDlist = new ArrayList<Integer>();
 
     public ArcSchedulerHandler(Arctica plugin)
     {
         this.plugin = plugin;
 
         initCraftedBlocksIDlist();
+        initWarmBlocksIDlist();
     }
 
     /* These Blocks will be accepted as suitable for building a safe shelter
@@ -62,6 +64,15 @@ public class ArcSchedulerHandler
         craftedBlocksIDlist.add(133);
     }
 
+    /* These Blocks will be accepted as warm blocks that grant a warmth bonus
+     * if player is near one of them */    
+    void initWarmBlocksIDlist()
+    {
+        warmBlocksIDlist.add(10);
+        warmBlocksIDlist.add(11);
+        warmBlocksIDlist.add(51);
+    }
+
     public void startCleanupScheduler_SyncRep()
     {      
         plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable()
@@ -92,8 +103,11 @@ public class ArcSchedulerHandler
                             {                                 
 
                                 boolean currPlayerIsOutside = false;
+                                boolean currPlayerIsNearFire = false;
 
                                 currPlayerIsOutside = checkIfOutside(currPlayer);
+
+                                currPlayerIsNearFire = checkIfNearFire(currPlayer);
 
                                 int realDamageToApply = 0;
 
@@ -104,16 +118,25 @@ public class ArcSchedulerHandler
                                     if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist im Wasser.");
                                     if(currPlayerIsOutside)
                                     {
-                                        // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
-                                        realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInWater + Arctica.extraDamageInWaterWhenOutside) * (1.0 - plugin.getDamageReduceFactor(currPlayer))));
+                                        // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0 && < 1.
+                                        // no warmth bonus when in water and outside!
+                                        realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInWater + Arctica.extraDamageInWaterWhenOutside) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
                                     }
                                     else                                    
                                     {
-                                        // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
-                                        realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - plugin.getDamageReduceFactor(currPlayer))));
+                                        if(currPlayerIsNearFire)
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                        }
+                                        else
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));   
+                                        }                                       
                                     }                                    
                                 }
-                                else
+                                else // player is in air
                                 {
                                     /*
                                      [syntax = java]
@@ -133,13 +156,29 @@ public class ArcSchedulerHandler
 
                                     if(currPlayerIsOutside)
                                     {
-                                        // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
-                                        realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInAir  + Arctica.extraDamageInAirWhenOutside) * (1.0 - plugin.getDamageReduceFactor(currPlayer))));
+                                        if(currPlayerIsNearFire)
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0                                            
+                                            realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInAir  + Arctica.extraDamageInAirWhenOutside) * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                        }
+                                        else
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));                                            
+                                        }
                                     }
                                     else
                                     {
-                                        // integer damage is rounded up. So minimum Damage is always 1 if dps is > 0.
-                                        realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactor(currPlayer))));
+                                        if(currPlayerIsNearFire)
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                        }
+                                        else
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));   
+                                        }
                                     }
 
                                     //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
@@ -217,11 +256,11 @@ public class ArcSchedulerHandler
         // Check TOP =========================================================
         // Check if there is a block above the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
-      
+
         // Important for C-Programmers: Objects in JAVA are NOT copied by using '='. It just sets another object reference!
         // Objects can only be copied by instantiating a new object and then copying ALL attributes from the other object
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
-                                
+
         int checkLimit = (int)checkedLoc.getY() + Arctica.checkRadius;
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head        
         if(checkLimit > Arctica.maxMapHeight)
@@ -260,11 +299,11 @@ public class ArcSchedulerHandler
         // Check NORTH =========================================================
         // Check if there is a block to the NORTH of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
-        
+
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         int checkLimit = (int)checkedLoc.getZ() - Arctica.checkRadius;
         checkedLoc.setZ(checkedLoc.getZ() - 1); // set start next to the player                
-       
+
         for(int checkedLocZ = (int)checkedLoc.getZ(); checkedLocZ > checkLimit; checkedLocZ--) //safer than "while"
         {   
             //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH checkedLocZ: " + checkedLocZ + " <> checkLimit: " + checkLimit);
@@ -297,11 +336,11 @@ public class ArcSchedulerHandler
         // Check EAST =========================================================
         // Check if there is a block to the EAST of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
-       
+
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         int checkLimit = (int)checkedLoc.getX() + Arctica.checkRadius;
         checkedLoc.setX(checkedLoc.getX() + 1); // set start next to the player                
-        
+
         for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX < checkLimit; checkedLocX++) //safer than "while"
         {   
             if (!checkedLoc.getBlock().isEmpty())
@@ -333,11 +372,11 @@ public class ArcSchedulerHandler
         // Check SOUTH =========================================================
         // Check if there is a block to the SOUTH of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
-        
+
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         int checkLimit = (int)checkedLoc.getZ() + Arctica.checkRadius;        
         checkedLoc.setZ(checkedLoc.getZ() + 1); // set start next to the player       
-       
+
         for(int checkedLocZ = (int)checkedLoc.getZ(); checkedLocZ < checkLimit; checkedLocZ++) //safer than "while"
         {   
             if (!checkedLoc.getBlock().isEmpty())
@@ -369,11 +408,11 @@ public class ArcSchedulerHandler
         // Check WEST =========================================================
         // Check if there is a block to the WEST of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
-       
+
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         int checkLimit = (int)checkedLoc.getX() - Arctica.checkRadius;        
         checkedLoc.setX(checkedLoc.getX() - 1); // set start next to the player        
-        
+
         for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX > checkLimit; checkedLocX--) //safer than "while"
         {   
             if (!checkedLoc.getBlock().isEmpty())
@@ -396,5 +435,60 @@ public class ArcSchedulerHandler
         }       
 
         return (res);
+    }
+
+    boolean checkIfNearFire(Player player)
+    { 
+        boolean playerIsNearFire = false;
+
+        Location playerLoc = player.getLocation();
+        //Location checkedWarmBlock = player.getLocation();
+
+        //int distanceToNearestWarmBlock = Arctica.warmBlockSearchRadius + 1;
+
+        int x1 = playerLoc.getBlockX() - Arctica.horizontalWarmBlockSearchRadius; // first corner of cube to check
+        int y1 = playerLoc.getBlockY() - Arctica.verticalWarmBlockSearchRadius;
+        int z1 = playerLoc.getBlockZ() - Arctica.horizontalWarmBlockSearchRadius;
+        World world = player.getWorld();
+        
+        int x2 = x1 + (2 * Arctica.horizontalWarmBlockSearchRadius); //second corner of cube to check
+        int y2 = y1 + (2 * Arctica.verticalWarmBlockSearchRadius);
+        int z2 = z1 + (2 * Arctica.horizontalWarmBlockSearchRadius);
+        
+        //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "SpielerPos: " + playerLoc.getBlockX() + ", " + playerLoc.getBlockY() + ", " + playerLoc.getBlockZ());
+        //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 1: " + x1 + ", " + y1 + ", " + z1);
+        //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 2: " + x2 + ", " + y2 + ", " + z2);
+                
+        int checkCount = 0;
+        int foundCount = 0;
+        
+        for (int checkedX = x1; checkedX < x2; checkedX++)
+        {
+            for (int checkedY = y1; checkedY < y2; checkedY++)
+            {
+                for (int checkedZ = z1; checkedZ < z2; checkedZ++)
+                {
+                    checkCount++;
+                    if(warmBlocksIDlist.contains(world.getBlockTypeIdAt(checkedX, checkedY, checkedZ)))
+                    {       
+                        foundCount++;
+                        /*checkedWarmBlock.setWorld(world); // Exact Distance gets not evaluated until now.
+                        checkedWarmBlock.setX(checkedX);
+                        checkedWarmBlock.setY(checkedY);
+                        checkedWarmBlock.setZ(checkedZ);
+
+                        int distanceToCheckedWarmBlock = (int)checkedWarmBlock.distance(playerLoc);
+                        if(distanceToCheckedWarmBlock < distanceToNearestWarmBlock)
+                        {
+                            distanceToNearestWarmBlock = distanceToCheckedWarmBlock;
+                        }*/                        
+                        playerIsNearFire = true;
+                    }
+                }
+            }
+        }
+        if(Arctica.debug && playerIsNearFire) player.sendMessage(ChatColor.AQUA + "Du bist in der Naehe einer Waermequelle.");
+        if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Blocks gecheckt: " + checkCount + " | Waermeqellen gefunden: " + foundCount);
+        return(playerIsNearFire);
     }
 }
