@@ -20,6 +20,11 @@ public class ArcSchedulerHandler
 
     ArrayList<Integer> craftedBlocksIDlist = new ArrayList<Integer>();
     ArrayList<Integer> warmBlocksIDlist = new ArrayList<Integer>();
+    ArrayList<String> playersToAffect = new ArrayList<String>();
+    static final int playersToHandleEachTick = 5; // set this dependent on the 'checked block count' for each player, to prevent overloading a tick time frame!
+    int handledPlayers = 0;
+    int cdSchedTaskID = 0; 
+    int playersToAffectCount = 0;
 
     public ArcSchedulerHandler(Arctica plugin)
     {
@@ -74,132 +79,187 @@ public class ArcSchedulerHandler
     }
 
     public void startCleanupScheduler_SyncRep()
-    {      
-        plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable()
+    {
+        // this is a synchronous repeating task
+        plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable()
         {
+            @Override
             public void run()
             {
+                Player[] onlinePlayerList = plugin.getServer().getOnlinePlayers();
+                playersToAffect.clear();
+                playersToAffectCount = 0;
+
                 //check for all players if they are in snow biome
-                try
-                { // TODO WICHTIG: eventuell Teile in async Thread auslagern??
-                    Player[] onlinePlayerList = plugin.getServer().getOnlinePlayers();
+                for(int i = 0; i < onlinePlayerList.length; i++)
+                {
+                    Player currPlayer = onlinePlayerList[i];
 
-                    for(int i = 0; i < onlinePlayerList.length; i++)
+                    if((currPlayer.hasPermission("arctica.use")) &&
+                            (!currPlayer.hasPermission("arctica.immune")))
                     {
-                        Player currPlayer = onlinePlayerList[i];
-                        if((currPlayer.hasPermission("arctica.use")) &&
-                                (!currPlayer.hasPermission("arctica.immune")))
-                        {
-                            //String currPlayersBiomeStr = currPlayer.getWorld().getBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ()).toString();
-                            Biome currPlayersBiome = currPlayer.getWorld().getBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ());
-                            //currPlayer.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Aktuelles Biom: " + currPlayersBiomeStr);   
+                        //String currPlayersBiomeStr = currPlayer.getWorld().getBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ()).toString();
+                        Biome currPlayersBiome = currPlayer.getWorld().getBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ());
+                        //currPlayer.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Aktuelles Biom: " + currPlayersBiomeStr);   
 
-                            if((currPlayersBiome == Biome.FROZEN_OCEAN) ||
-                                    (currPlayersBiome == Biome.FROZEN_RIVER) ||
-                                    (currPlayersBiome == Biome.ICE_MOUNTAINS) ||
-                                    (currPlayersBiome == Biome.ICE_PLAINS) ||
-                                    (currPlayersBiome == Biome.TAIGA) ||
-                                    (currPlayersBiome == Biome.TAIGA_HILLS))                               
-                            {                                 
-
-                                boolean currPlayerIsOutside = false;
-                                boolean currPlayerIsNearFire = false;
-
-                                currPlayerIsOutside = checkIfOutside(currPlayer);
-
-                                currPlayerIsNearFire = checkIfNearFire(currPlayer);
-
-                                int realDamageToApply = 0;
-
-                                // check if player is currently in water
-                                Material mat = currPlayer.getLocation().getBlock().getType();
-                                if (mat == Material.STATIONARY_WATER || mat == Material.WATER)
-                                {
-                                    if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist im Wasser.");
-                                    if(currPlayerIsOutside)
-                                    {
-                                        // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0 && < 1.
-                                        // no warmth bonus when in water and outside!
-                                        realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInWater + Arctica.extraDamageInWaterWhenOutside) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
-                                    }
-                                    else                                    
-                                    {
-                                        if(currPlayerIsNearFire)
-                                        {
-                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
-                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
-                                        }
-                                        else
-                                        {
-                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
-                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));   
-                                        }                                       
-                                    }                                    
-                                }
-                                else // player is in air
-                                {
-                                    /*
-                                     [syntax = java]
-                                        EntityPig piggy= new EntityPig (mcWorld);
-
-                                    mcWorld.addEntity(piggy, SpawnReason.CUSTOM);
-                                    [/syntax]
-
-                                    Where mcWorld is the craftbukkit world.getHandle().
-                                     * */
-
-                                    /*Entity chick = null;
-                                    CraftPlayer craftPlayer = (CraftPlayer)currPlayer;
-                                    CraftWorld craftWorld = (CraftWorld)craftPlayer.getWorld();
-                                    net.minecraft.server.World mworld = (net.minecraft.server.World)(craftWorld.getHandle());
-                                    chick = new Entity(mworld);*/
-
-                                    if(currPlayerIsOutside)
-                                    {
-                                        if(currPlayerIsNearFire)
-                                        {
-                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0                                            
-                                            realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInAir  + Arctica.extraDamageInAirWhenOutside) * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
-                                        }
-                                        else
-                                        {
-                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
-                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));                                            
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if(currPlayerIsNearFire)
-                                        {
-                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
-                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
-                                        }
-                                        else
-                                        {
-                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
-                                            realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));   
-                                        }
-                                    }
-
-                                    //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
-                                }
-
-                                // fire custom damage event ================================================                                
-                                ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event                                
-                                plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
-                                //==========================================================================
-                                //currPlayer.sendMessage(ChatColor.AQUA + "Du frierst.");
-                            }
+                        if((currPlayersBiome == Biome.FROZEN_OCEAN) ||
+                                (currPlayersBiome == Biome.FROZEN_RIVER) ||
+                                (currPlayersBiome == Biome.ICE_MOUNTAINS) ||
+                                (currPlayersBiome == Biome.ICE_PLAINS) ||
+                                (currPlayersBiome == Biome.TAIGA) ||
+                                (currPlayersBiome == Biome.TAIGA_HILLS))                               
+                        {    
+                            playersToAffect.add(currPlayer.getName());
+                            playersToAffectCount++;
                         }
                     }
+                }
+
+                if(!playersToAffect.isEmpty())
+                {          
+                    handledPlayers = 0;
+                    for(int i = 0; i < ((int)Math.ceil(playersToAffectCount / playersToHandleEachTick)); i++)
+                    {
+                        task_applyColdDamage(); // handles the given amount of players each tick. Must be called multiple times until all
+                        // players have been handled
+                    }
+                }
+            }
+        }, (20*5L), 20*Arctica.damageApplyPeriod); // 5 sec delay, configurable period in seconds
+    }
+
+    void task_applyColdDamage()
+    {
+        // this is a synchronous single task. It will be run once on the next tick.
+        plugin.getServer().getScheduler().runTask(plugin, new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Player currPlayer = null;
+                boolean currPlayerIsOutside = false;
+                boolean currPlayerIsNearFire = false;
+                int realDamageToApply = 0;
+                int handledPlayersThisTick = 0;
+
+                try
+                {
+                    if(handledPlayers < playersToAffectCount)
+                    {
+                        for (int currPlayerIndex = handledPlayers; currPlayerIndex < playersToAffect.size(); currPlayerIndex++)
+                        {
+                            if(null != playersToAffect.get(currPlayerIndex)) // Hashmap may contain NULL values! So assure it's a real player.
+                            {
+                                if(handledPlayersThisTick < playersToHandleEachTick)
+                                {
+                                    currPlayer = plugin.getServer().getPlayerExact(playersToAffect.get(currPlayerIndex));
+
+                                    currPlayerIsOutside = checkIfOutside(currPlayer);
+                                    currPlayerIsNearFire = checkIfNearFire(currPlayer);
+
+                                    // check if player is currently in water
+                                    Material mat = currPlayer.getLocation().getBlock().getType();
+                                    if (mat == Material.STATIONARY_WATER || mat == Material.WATER)
+                                    {
+                                        if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist im Wasser.");
+                                        if(currPlayerIsOutside)
+                                        {
+                                            // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0 && < 1.
+                                            // no warmth bonus when in water and outside!
+                                            realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInWater + Arctica.extraDamageInWaterWhenOutside) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                        }
+                                        else                                    
+                                        {
+                                            if(currPlayerIsNearFire)
+                                            {
+                                                // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                                realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                            }
+                                            else
+                                            {
+                                                // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                                realDamageToApply = (int)Math.ceil((Arctica.baseDamageInWater * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));   
+                                            }                                       
+                                        }                                    
+                                    }
+                                    else // player is in air
+                                    {
+                                        /*
+                                                     [syntax = java]
+                                                        EntityPig piggy= new EntityPig (mcWorld);
+
+                                                    mcWorld.addEntity(piggy, SpawnReason.CUSTOM);
+                                                    [/syntax]
+
+                                                    Where mcWorld is the craftbukkit world.getHandle().
+                                         * */
+
+                                        /*Entity chick = null;
+                                                    CraftPlayer craftPlayer = (CraftPlayer)currPlayer;
+                                                    CraftWorld craftWorld = (CraftWorld)craftPlayer.getWorld();
+                                                    net.minecraft.server.World mworld = (net.minecraft.server.World)(craftWorld.getHandle());
+                                                    chick = new Entity(mworld);*/
+
+                                        if(currPlayerIsOutside)
+                                        {
+                                            if(currPlayerIsNearFire)
+                                            {
+                                                // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0                                            
+                                                realDamageToApply = (int)Math.ceil(((Arctica.baseDamageInAir  + Arctica.extraDamageInAirWhenOutside) * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                            }
+                                            else
+                                            {
+                                                // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                                realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));                                            
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if(currPlayerIsNearFire)
+                                            {
+                                                // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                                realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - Arctica.warmthBonusFactor) * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                            }
+                                            else
+                                            {
+                                                // integer damage is rounded up. So minimum Damage is always 1 if damage is > 0.0... && < 1.0
+                                                realDamageToApply = (int)Math.ceil((Arctica.baseDamageInAir * (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));   
+                                            }
+                                        }
+
+                                        //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
+                                    }
+
+                                    // fire custom damage event ================================================                                
+                                    ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event                                
+                                    plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
+                                    //==========================================================================
+                                    //currPlayer.sendMessage(ChatColor.AQUA + "Du frierst.");                                
+                                    handledPlayersThisTick++; // a player was handled. Increase counter for current tick.
+                                    handledPlayers++; // a player was handled. Increase counter for playersToAffect list.   
+                                }
+                                else
+                                {
+                                    // limit of players for this tick is reached. Leave loop.
+                                    break;
+                                } // end if/else Handled players count check
+                            } // end if NULL check
+                        } // end if FOR loop   
+                    }// end if handledPlayers < playersToAffectCount
                 }
                 catch(Exception ex)
                 {
                     Arctica.log.info(Arctica.logPrefix + ex.getMessage());
-                    // player probably no longer online
-                }                
-            }
-        }, (20*5L), 20*Arctica.damageApplyPeriod); // 5 sec delay, configurable period in seconds        
+                    // player probably no longer online or no longer meeting the necessary requirements for beeing affected
+                } // end TRY/CATCH
+
+            } // end RUN()
+        }); // end scheduler call
+    }
+
+    public void setTaskID(int id)
+    {
+        this.cdSchedTaskID = id;
     }
 
     boolean checkIfOutside(Player player)
@@ -450,18 +510,18 @@ public class ArcSchedulerHandler
         int y1 = playerLoc.getBlockY() - Arctica.verticalWarmBlockSearchRadius;
         int z1 = playerLoc.getBlockZ() - Arctica.horizontalWarmBlockSearchRadius;
         World world = player.getWorld();
-        
+
         int x2 = x1 + (2 * Arctica.horizontalWarmBlockSearchRadius); //second corner of cube to check
         int y2 = y1 + (2 * Arctica.verticalWarmBlockSearchRadius);
         int z2 = z1 + (2 * Arctica.horizontalWarmBlockSearchRadius);
-        
+
         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "SpielerPos: " + playerLoc.getBlockX() + ", " + playerLoc.getBlockY() + ", " + playerLoc.getBlockZ());
         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 1: " + x1 + ", " + y1 + ", " + z1);
         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 2: " + x2 + ", " + y2 + ", " + z2);
-                
+
         int checkCount = 0;
         int foundCount = 0;
-        
+
         for (int checkedX = x1; checkedX < x2; checkedX++)
         {
             for (int checkedY = y1; checkedY < y2; checkedY++)

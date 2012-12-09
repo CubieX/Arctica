@@ -18,7 +18,7 @@ public class Arctica extends JavaPlugin
     static String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
     static boolean debug = false;
     static boolean safemode = false;
-    static int damageApplyPeriod = 10;
+    static int damageApplyPeriod = 10; // seconds to apply the cold damage (cyclic)
     static int baseDamageInAir = 0;
     static int extraDamageInAirWhenOutside = 0;
     static int baseDamageInWater = 0;    
@@ -28,7 +28,8 @@ public class Arctica extends JavaPlugin
     final static int horizontalWarmBlockSearchRadius = 5;
     final static int verticalWarmBlockSearchRadius = 3;
     final static double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
-
+    // TODO make configurable??
+    // FIXME Verhalten wenn Spieler tot ist und Respawnen will? Da is was nicht ok... mit den Leben usw.
     //************************************************
     static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
     //************************************************
