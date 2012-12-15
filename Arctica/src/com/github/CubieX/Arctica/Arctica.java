@@ -18,16 +18,20 @@ public class Arctica extends JavaPlugin
     static String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
     static boolean debug = false;
     static boolean safemode = false;
+    
     static int damageApplyPeriod = 10; // seconds to apply the cold damage (cyclic)
-    static int baseDamageInAir = 0;
-    static int extraDamageInAirWhenOutside = 0;
-    static int baseDamageInWater = 0;    
-    static int extraDamageInWaterWhenOutside = 0;
+    static double baseDamageInAir = 0.0;
+    static double extraDamageInAirWhenOutside = 0.0;
+    static double baseDamageInWater = 0.0;    
+    static double extraDamageInWaterWhenOutside = 0.0;
+    final static double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
+    final static double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces Damage by 25% BEFORE evaluating Cloth bonus.
+    
     static int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)
     final static int maxMapHeight = 255;
     final static int horizontalWarmBlockSearchRadius = 5;
     final static int verticalWarmBlockSearchRadius = 3;
-    final static double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
+    
     // TODO make configurable??
     // FIXME Verhalten wenn Spieler tot ist und Respawnen will? Da is was nicht ok... mit den Leben usw.
     //************************************************
@@ -61,7 +65,7 @@ public class Arctica extends JavaPlugin
 
         readConfigValues();
 
-        schedHandler.startCleanupScheduler_SyncRep();        
+        schedHandler.startColdDamageScheduler_SyncRep();        
 
         log.info(getDescription().getName() + " version " + getDescription().getVersion() + " is enabled!");
     }
@@ -108,24 +112,24 @@ public class Arctica extends JavaPlugin
         if(Arctica.damageApplyPeriod > 60) damageApplyPeriod = 60;
         if(Arctica.damageApplyPeriod < 5) damageApplyPeriod = 5;
 
-        baseDamageInAir = this.getConfig().getInt("baseDamageInAir");
+        baseDamageInAir = (double)this.getConfig().getInt("baseDamageInAir");
         if(Arctica.baseDamageInAir > 20) baseDamageInAir = 20;
         if(Arctica.baseDamageInAir < 0) baseDamageInAir = 0;
         
-        baseDamageInWater = this.getConfig().getInt("baseDamageInWater");
+        baseDamageInWater = (double)this.getConfig().getInt("baseDamageInWater");
         if(baseDamageInWater > 20) baseDamageInWater = 20;
         if(baseDamageInWater < 0) baseDamageInWater = 0;
 
-        extraDamageInAirWhenOutside = this.getConfig().getInt("extraDamageInAirWhenOutside");
+        extraDamageInAirWhenOutside = (double)this.getConfig().getInt("extraDamageInAirWhenOutside");
         if(extraDamageInAirWhenOutside > 20) extraDamageInAirWhenOutside = 20;
         if(extraDamageInAirWhenOutside < 0) extraDamageInAirWhenOutside = 0;
 
-        extraDamageInWaterWhenOutside = this.getConfig().getInt("extraDamageInWaterWhenOutside");
+        extraDamageInWaterWhenOutside = (double)this.getConfig().getInt("extraDamageInWaterWhenOutside");
         if(extraDamageInWaterWhenOutside > 20) extraDamageInWaterWhenOutside = 20;
         if(extraDamageInWaterWhenOutside < 0) extraDamageInWaterWhenOutside = 0;
     }
 
-    // Calculates the factor for damage reduction from players worn armor
+    // Calculates the factor for damage reduction from players worn armor. Max. 0.8 = 80% DamRed
     public double getDamageReduceFactorFromCloth(Player player)
     {
         org.bukkit.inventory.PlayerInventory inv = player.getInventory();
@@ -170,6 +174,11 @@ public class Arctica extends JavaPlugin
             else if(chest.getType() == Material.DIAMOND_CHESTPLATE)red = red + 0.32;
         }
         return red;
+    }
+    
+    public boolean playerIsHoldingTorch(String playerName)
+    {
+        return (eListener.playerIsHoldingTorch(playerName));
     }
 
     void disablePlugin()

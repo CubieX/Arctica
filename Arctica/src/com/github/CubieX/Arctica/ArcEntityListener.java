@@ -1,5 +1,6 @@
 package com.github.CubieX.Arctica;
 
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import org.bukkit.ChatColor;
@@ -8,13 +9,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class ArcEntityListener implements Listener
 {
     private final Arctica plugin;
     private final Logger log;
+    ArrayList<String> playersHoldingTorch = new ArrayList<String>();
 
     //Constructor
     public ArcEntityListener(Arctica plugin, Logger log)
@@ -66,7 +70,7 @@ public class ArcEntityListener implements Listener
                 if(event.getAfflictedPlayer() instanceof Player)
                 {
                     victim = event.getAfflictedPlayer();
-                                        
+
                     if((victim.getHealth() - damageToApply) >= 1)
                     {
                         victim.setHealth(victim.getHealth() - damageToApply);
@@ -87,5 +91,54 @@ public class ArcEntityListener implements Listener
             Arctica.log.info(Arctica.logPrefix + ex.getMessage());
             // player is probably no longer online 
         }
-    }    
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onPlayerItemHeld(PlayerItemHeldEvent event)
+    {
+        try
+        {             
+            if((event.getPlayer().hasPermission("arctica.use")) &&
+                    (!event.getPlayer().hasPermission("arctica.immune")))
+            {               
+                ItemStack newItem;            
+                newItem = event.getPlayer().getInventory().getItem(event.getNewSlot());
+                if (null != newItem) // is null if empty slot
+                {
+                    if(newItem.getTypeId() == 50) // check if held item is a torch
+                    {                        
+                        if(false == playersHoldingTorch.contains(event.getPlayer().getName()))
+                        {
+                            //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus EIN.");}
+                            playersHoldingTorch.add(event.getPlayer().getName());
+                        }
+                    }
+                    else // Player with permission has no torch in hand, so delete him from the List if he's on it.
+                    {                        
+                        if(playersHoldingTorch.contains(event.getPlayer().getName()))
+                        {
+                            //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus AUS.");}
+                            playersHoldingTorch.remove(event.getPlayer().getName());                    
+                        }
+                    }
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            // player is probably no longer online
+        }
+    }
+
+    public boolean playerIsHoldingTorch(String playerName)
+    {
+        boolean res = false;
+
+        if(playersHoldingTorch.contains(playerName))
+        {
+            res = true;
+        }
+        
+        return (res);
+    }
 }
