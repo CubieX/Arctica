@@ -161,11 +161,12 @@ public class ArcSchedulerHandler
                 {
                     if(handledPlayers < playersToAffectCount)
                     {
-                        for (int currPlayerIndex = handledPlayers; currPlayerIndex < playersToAffect.size(); currPlayerIndex++)
+                        for (int currPlayerIndex = handledPlayers; currPlayerIndex < playersToAffect.size(); currPlayerIndex++) // go through Hashmap
                         {
                             if(null != playersToAffect.get(currPlayerIndex)) // Hashmap may contain NULL values! So assure it's a real player.
                             {
-                                if(handledPlayersThisTick < playersToHandleEachTick)
+                                if((handledPlayersThisTick < playersToAffectCount) &&
+                                        (handledPlayersThisTick < playersToHandleEachTick))
                                 {
                                     currPlayer = plugin.getServer().getPlayerExact(playersToAffect.get(currPlayerIndex));
 
@@ -568,7 +569,7 @@ public class ArcSchedulerHandler
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
         int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
-        
+
         if(checkLimitY > Arctica.maxMapHeight)
         {
             checkLimitY = Arctica.maxMapHeight;
@@ -601,7 +602,7 @@ public class ArcSchedulerHandler
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
         int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
-        
+
         for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() + 1)) // go one block up and to the east
         {   
             //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
@@ -628,7 +629,7 @@ public class ArcSchedulerHandler
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
         int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
-        
+
         for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() + 1)) // go one block up and SOUTH
         {   
             //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
@@ -655,7 +656,7 @@ public class ArcSchedulerHandler
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
         int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
-        
+
         for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() - 1)) // go one block up and WEST
         {   
             //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());

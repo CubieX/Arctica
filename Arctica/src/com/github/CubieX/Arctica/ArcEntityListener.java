@@ -103,25 +103,23 @@ public class ArcEntityListener implements Listener
             {               
                 ItemStack newItem;            
                 newItem = event.getPlayer().getInventory().getItem(event.getNewSlot());
-                if (null != newItem) // is null if empty slot
+                if ((null != newItem) &&
+                        (newItem.getTypeId() == 50)) // Check if held item is a torch. Is null if empty slot.
                 {
-                    if(newItem.getTypeId() == 50) // check if held item is a torch
-                    {                        
-                        if(false == playersHoldingTorch.contains(event.getPlayer().getName()))
-                        {
-                            //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus EIN.");}
-                            playersHoldingTorch.add(event.getPlayer().getName());
-                        }
-                    }
-                    else // Player with permission has no torch in hand, so delete him from the List if he's on it.
-                    {                        
-                        if(playersHoldingTorch.contains(event.getPlayer().getName()))
-                        {
-                            //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus AUS.");}
-                            playersHoldingTorch.remove(event.getPlayer().getName());                    
-                        }
+                    if(!playersHoldingTorch.contains(event.getPlayer().getName()))
+                    {
+                        //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus EIN.");}
+                        playersHoldingTorch.add(event.getPlayer().getName());
                     }
                 }
+                else // Player with permission has no torch in hand, so delete him from the List if he's on it.
+                {                        
+                    if(playersHoldingTorch.contains(event.getPlayer().getName()))
+                    {
+                        //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus AUS.");}
+                        playersHoldingTorch.remove(event.getPlayer().getName());                    
+                    }
+                }            
             }
         }
         catch(Exception ex)
@@ -138,7 +136,7 @@ public class ArcEntityListener implements Listener
         {
             res = true;
         }
-        
+
         return (res);
     }
 }

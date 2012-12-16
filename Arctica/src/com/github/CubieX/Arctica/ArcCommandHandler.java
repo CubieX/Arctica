@@ -47,7 +47,7 @@ public class ArcCommandHandler implements CommandExecutor
                 {            
                     if(sender.hasPermission("arctica.admin"))
                     {
-                        cHandler.reloadConfig(sender);                        
+                        cHandler.reloadConfig(sender);
                     }
                     else
                     {
