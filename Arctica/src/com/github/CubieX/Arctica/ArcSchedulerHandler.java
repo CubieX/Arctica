@@ -25,6 +25,7 @@ public class ArcSchedulerHandler
     int handledPlayers = 0;
     int cdSchedTaskID = 0; 
     int playersToAffectCount = 0;
+    static final int neededCraftBlockRows = 2; // amount of vertical rows that must consist of crafted blocks to determine wehter the player is inside or outside
 
     public ArcSchedulerHandler(Arctica plugin)
     {
@@ -54,6 +55,8 @@ public class ArcSchedulerHandler
         craftedBlocksIDlist.add(48);
         craftedBlocksIDlist.add(49);
         craftedBlocksIDlist.add(57);
+        craftedBlocksIDlist.add(64);
+        craftedBlocksIDlist.add(71);
         craftedBlocksIDlist.add(82);
         craftedBlocksIDlist.add(87);
         craftedBlocksIDlist.add(88);
@@ -120,7 +123,7 @@ public class ArcSchedulerHandler
                     // calculate how many ticks will be needed to handle all players that should be affected
                     int amountOfTicksNeededToHandleAllAffectedPlayers = (int)(Math.ceil((double)playersToAffectCount / (double)playersToHandleEachTick));
                     handledPlayers = 0;
-                    
+
                     for(int i = 0; i < amountOfTicksNeededToHandleAllAffectedPlayers; i++)
                     {
                         task_applyColdDamage(); // handles the given amount of players each tick. Must be called multiple times until all
@@ -137,7 +140,7 @@ public class ArcSchedulerHandler
         plugin.getServer().getScheduler().runTask(plugin, new Runnable()
         {
             @Override
-            public void run()
+            public void run() //aktuelle Scandauer: ca. 2 ms/Spieler (begrenzt auf 5x diese Zeit pro Tick!)
             {
                 Player currPlayer = null;
                 boolean currPlayerIsOutside = false;
@@ -228,7 +231,7 @@ public class ArcSchedulerHandler
                                         if(currPlayerIsNearFire)
                                         {
                                             warmthBonusFactorToApply = Arctica.warmthBonusFactor;
-                                            
+
                                             if(currPlayerIsOutside)
                                             {
                                                 baseDamageInAirToApply = Arctica.baseDamageInAir;
@@ -242,7 +245,7 @@ public class ArcSchedulerHandler
                                         else
                                         { // player is in air, but not near fire
                                             baseDamageInAirToApply = Arctica.baseDamageInAir;
-                                            
+
                                             if(currPlayerIsOutside)
                                             { // player is outside in air, not near fire                                                
                                                 extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;                                                
@@ -252,7 +255,7 @@ public class ArcSchedulerHandler
                                                 // No extra damage. Only base Damage.
                                             }
                                         }
-                                        
+
                                         //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
                                     }
 
@@ -302,6 +305,10 @@ public class ArcSchedulerHandler
     { 
         boolean playerIsOutside = true;
         boolean craftedBlockTOP = false;
+        boolean craftedBlockNORTHdiagonal = false;
+        boolean craftedBlockEASTdiagonal = false;
+        boolean craftedBlockSOUTHdiagonal = false;
+        boolean craftedBlockWESTdiagonal = false;
         boolean craftedBlockNORTH = false;
         boolean craftedBlockEAST = false;
         boolean craftedBlockSOUTH = false;
@@ -310,23 +317,41 @@ public class ArcSchedulerHandler
         Location playerLoc = player.getLocation();
 
         // Check TOP ========================================================
-        // Check if a Block to the TOP of the player is a crafted block
+        // Check if a Block straight to the TOP of the player is a crafted block
         craftedBlockTOP = TOPhasCraftedBlock(playerLoc);
-        // Check NORTH ========================================================
-        // Check if a Block to the NORTH of the player is a crafted block
+
+        // Check NORTH 45 degrees ================================================================
+        // Check if a Block to the NORTH in 45 degrees to the top of the player is a crafted block
+        craftedBlockNORTHdiagonal = NORTHdiagnoalHasCraftedBlock(playerLoc);
+        // Check EAST 45 degrees ================================================================
+        // Check if a Block to the EAST in 45 degrees to the top of the player is a crafted block
+        craftedBlockEASTdiagonal = EASTdiagnoalHasCraftedBlock(playerLoc);
+        // Check SOUTH 45 degrees ================================================================
+        // Check if a Block to the SOUTH in 45 degrees to the top of the player is a crafted block
+        craftedBlockSOUTHdiagonal = SOUTHdiagnoalHasCraftedBlock(playerLoc);
+        // Check WEST 45 degrees ================================================================
+        // Check if a Block to the WEST in 45 degrees to the top of the player is a crafted block
+        craftedBlockWESTdiagonal = WESTdiagnoalHasCraftedBlock(playerLoc);
+
+        // Check NORTH ========================================================================================
+        // Check if a Block to the NORTH of the player is a crafted block (block on foot and head level needed)
         craftedBlockNORTH = NORTHhasCraftedBlock(playerLoc);
-        // Check EAST =========================================================
-        // Check if a Block to the EAST of the player is a crafted block
+        // Check EAST =========================================================================================
+        // Check if a Block to the EAST of the player is a crafted block (block on foot and head level needed)
         craftedBlockEAST = EASThasCraftedBlock(playerLoc);
-        // Check SOUTH ========================================================
-        // Check if a Block to the SOUTH of the player is a crafted block
+        // Check SOUTH ========================================================================================
+        // Check if a Block to the SOUTH of the player is a crafted block (block on foot and head level needed)
         craftedBlockSOUTH = SOUTHhasCraftedBlock(playerLoc);
-        // Check WEST =========================================================
-        // Check if a Block to the WEST of the player is a crafted block
+        // Check WEST =========================================================================================
+        // Check if a Block to the WEST of the player is a crafted block (block on foot and head level needed)
         craftedBlockWEST = WESThasCraftedBlock(playerLoc);
 
         // Gather all results and combine them
         if(craftedBlockTOP &&
+                craftedBlockNORTHdiagonal &&
+                craftedBlockEASTdiagonal &&
+                craftedBlockSOUTHdiagonal &&
+                craftedBlockWESTdiagonal &&
                 craftedBlockNORTH &&
                 craftedBlockEAST &&
                 craftedBlockSOUTH &&
@@ -362,9 +387,9 @@ public class ArcSchedulerHandler
         if(checkLimit > Arctica.maxMapHeight)
         {
             checkLimit = Arctica.maxMapHeight;
-        }       
+        }
 
-        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY < checkLimit; checkedLocY++) //safer than "while"
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY < checkLimit; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1)) //safer than "while"
         {   
             if (!checkedLoc.getBlock().isEmpty())
             {
@@ -374,14 +399,6 @@ public class ArcSchedulerHandler
                     res = true;
                     break;
                 }
-                else
-                {
-                    checkedLoc.setY(checkedLoc.getY() + 1);                   
-                }
-            }
-            else 
-            {
-                checkedLoc.setY(checkedLoc.getY() + 1);               
             }
         }
 
@@ -391,36 +408,38 @@ public class ArcSchedulerHandler
     boolean NORTHhasCraftedBlock(Location startLocation)
     {
         boolean res = false;
+        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
 
         // Check NORTH =========================================================
         // Check if there is a block to the NORTH of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
         int checkLimit = (int)checkedLoc.getZ() - Arctica.checkRadius;
         checkedLoc.setZ(checkedLoc.getZ() - 1); // set start next to the player                
 
-        for(int checkedLocZ = (int)checkedLoc.getZ(); checkedLocZ > checkLimit; checkedLocZ--) //safer than "while"
-        {   
-            //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH checkedLocZ: " + checkedLocZ + " <> checkLimit: " + checkLimit);
-            if (!checkedLoc.getBlock().isEmpty())
-            {                
-                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
-                {
-                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
-                    res = true;                    
-                    break;
-                }
-                else
-                {
-                    checkedLoc.setZ(checkedLoc.getZ() - 1);                    
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY()+1))
+        {
+            for(int checkedLocZ = (int)checkedLoc.getZ(); checkedLocZ > checkLimit; checkedLocZ--, checkedLoc.setZ(checkedLoc.getZ() - 1)) //safer than "while"
+            {   
+                //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH checkedLocZ: " + checkedLocZ + " <> checkLimit: " + checkLimit);
+                if (!checkedLoc.getBlock().isEmpty())
+                {                
+                    if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+                    {
+                        //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH Block gefunden: " + checkedLoc.getBlock().getType().toString());                        
+                        validCraftBlockRows++;
+                        break;
+                    }
                 }
             }
-            else 
-            {
-                checkedLoc.setZ(checkedLoc.getZ() - 1);                
-            }
-        }        
+        }
+
+        if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
+        {
+            res = true;
+        }
 
         return (res);
     }
@@ -428,35 +447,37 @@ public class ArcSchedulerHandler
     boolean EASThasCraftedBlock(Location startLocation)
     {
         boolean res = false;
+        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
 
         // Check EAST =========================================================
         // Check if there is a block to the EAST of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
         int checkLimit = (int)checkedLoc.getX() + Arctica.checkRadius;
         checkedLoc.setX(checkedLoc.getX() + 1); // set start next to the player                
 
-        for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX < checkLimit; checkedLocX++) //safer than "while"
-        {   
-            if (!checkedLoc.getBlock().isEmpty())
-            {
-                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY()+1))
+        {
+            for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX < checkLimit; checkedLocX++, checkedLoc.setX(checkedLoc.getX() + 1)) //safer than "while"
+            {   
+                if (!checkedLoc.getBlock().isEmpty())
                 {
-                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST Block gefunden: " + checkedLoc.getBlock().getType().toString());
-                    res = true;
-                    break;
-                }
-                else
-                {
-                    checkedLoc.setX(checkedLoc.getX() + 1);                   
+                    if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+                    {
+                        //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                        validCraftBlockRows++;
+                        break;
+                    }
                 }
             }
-            else 
-            {
-                checkedLoc.setX(checkedLoc.getX() + 1);               
-            }
-        }       
+        }
+
+        if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
+        {
+            res = true;
+        }
 
         return (res);
     }
@@ -464,35 +485,37 @@ public class ArcSchedulerHandler
     boolean SOUTHhasCraftedBlock(Location startLocation)
     {
         boolean res = false;
+        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
 
         // Check SOUTH =========================================================
         // Check if there is a block to the SOUTH of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
         int checkLimit = (int)checkedLoc.getZ() + Arctica.checkRadius;        
         checkedLoc.setZ(checkedLoc.getZ() + 1); // set start next to the player       
 
-        for(int checkedLocZ = (int)checkedLoc.getZ(); checkedLocZ < checkLimit; checkedLocZ++) //safer than "while"
-        {   
-            if (!checkedLoc.getBlock().isEmpty())
-            {
-                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY()+1))
+        {
+            for(int checkedLocZ = (int)checkedLoc.getZ(); checkedLocZ < checkLimit; checkedLocZ++, checkedLoc.setZ(checkedLoc.getZ() + 1)) //safer than "while"
+            {   
+                if (!checkedLoc.getBlock().isEmpty())
                 {
-                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
-                    res = true;
-                    break;
+                    if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+                    {
+                        //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                        validCraftBlockRows++;
+                        break;
+                    }
                 }
-                else
-                {
-                    checkedLoc.setZ(checkedLoc.getZ() + 1);                    
-                }
-            }
-            else 
-            {
-                checkedLoc.setZ(checkedLoc.getZ() + 1);                
-            }
-        }            
+            }            
+        }
+
+        if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
+        {
+            res = true;
+        }
 
         return (res);
     }
@@ -500,36 +523,152 @@ public class ArcSchedulerHandler
     boolean WESThasCraftedBlock(Location startLocation)
     {
         boolean res = false;
+        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
 
         // Check WEST =========================================================
         // Check if there is a block to the WEST of the players position which is a valid
         // crafted block for a shelter to gain the "indoor warmth bonus"
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
         int checkLimit = (int)checkedLoc.getX() - Arctica.checkRadius;        
         checkedLoc.setX(checkedLoc.getX() - 1); // set start next to the player        
 
-        for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX > checkLimit; checkedLocX--) //safer than "while"
-        {   
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY()+1))
+        {
+            for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX > checkLimit; checkedLocX--, checkedLoc.setX(checkedLoc.getX() - 1)) //safer than "while"
+            {   
+                if (!checkedLoc.getBlock().isEmpty())
+                {
+                    if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+                    {
+                        //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                        validCraftBlockRows++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
+        {
+            res = true;
+        }
+
+        return (res);
+    }
+
+    boolean NORTHdiagnoalHasCraftedBlock(Location startLocation)
+    {
+        boolean res = false;
+
+        // Check NORTH 45 degrees =========================================================
+        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+
+        Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+        int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
+        
+        if(checkLimitY > Arctica.maxMapHeight)
+        {
+            checkLimitY = Arctica.maxMapHeight;
+        }
+
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() - 1)) // go one block up and to the north
+        {          
+            //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
             if (!checkedLoc.getBlock().isEmpty())
             {
                 if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                 {
-                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                     res = true;
                     break;
                 }
-                else
+            }
+        }
+
+        return (res);
+    }
+
+    boolean EASTdiagnoalHasCraftedBlock(Location startLocation)
+    {
+        boolean res = false;
+
+        // Check EAST 45 degrees =========================================================
+        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+
+        Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+        int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
+        
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() + 1)) // go one block up and to the east
+        {   
+            //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+            if (!checkedLoc.getBlock().isEmpty())
+            {
+                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                 {
-                    checkedLoc.setX(checkedLoc.getX() - 1);                   
+                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                    res = true;
+                    break;
                 }
             }
-            else 
-            {
-                checkedLoc.setX(checkedLoc.getX() - 1);               
-            }
-        }       
+        }
+        return (res);
+    }
 
+    boolean SOUTHdiagnoalHasCraftedBlock(Location startLocation)
+    {
+        boolean res = false;
+
+        // Check SOUTH 45 degrees =========================================================
+        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+
+        Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+        int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
+        
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() + 1)) // go one block up and SOUTH
+        {   
+            //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+            if (!checkedLoc.getBlock().isEmpty())
+            {
+                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+                {
+                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                    res = true;
+                    break;
+                }
+            }
+        }
+        return (res);
+    }
+
+    boolean WESTdiagnoalHasCraftedBlock(Location startLocation)
+    {
+        boolean res = false;
+
+        // Check WEST 45 degrees =========================================================
+        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+
+        Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+        checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+        int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
+        
+        for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() - 1)) // go one block up and WEST
+        {   
+            //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+            if (!checkedLoc.getBlock().isEmpty())
+            {
+                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
+                {
+                    //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                    res = true;
+                    break;
+                }
+            }
+        }
         return (res);
     }
 
@@ -555,8 +694,8 @@ public class ArcSchedulerHandler
         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 1: " + x1 + ", " + y1 + ", " + z1);
         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 2: " + x2 + ", " + y2 + ", " + z2);
 
-        int checkCount = 0;
-        int foundCount = 0;
+        //int checkCount = 0;
+        //int foundCount = 0;
 
         for (int checkedX = x1; checkedX < x2; checkedX++)
         {
@@ -564,10 +703,10 @@ public class ArcSchedulerHandler
             {
                 for (int checkedZ = z1; checkedZ < z2; checkedZ++)
                 {
-                    checkCount++;
+                    //checkCount++;
                     if(warmBlocksIDlist.contains(world.getBlockTypeIdAt(checkedX, checkedY, checkedZ)))
                     {       
-                        foundCount++;
+                        //foundCount++;
                         /*checkedWarmBlock.setWorld(world); // Exact Distance gets not evaluated until now.
                         checkedWarmBlock.setX(checkedX);
                         checkedWarmBlock.setY(checkedY);
@@ -587,17 +726,17 @@ public class ArcSchedulerHandler
         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Blocks gecheckt: " + checkCount + " | Waermeqellen gefunden: " + foundCount);
         return(playerIsNearFire);
     }
-    
+
     boolean checkIfInWater(Player player)
     {
         boolean playerIsInWater = false;
-        
+
         Material mat = player.getLocation().getBlock().getType();
         if (mat == Material.STATIONARY_WATER || mat == Material.WATER)
         {
             playerIsInWater = true;
         }
-        
+
         return (playerIsInWater);
     }
 }

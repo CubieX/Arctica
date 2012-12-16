@@ -15,7 +15,7 @@ public class Arctica extends JavaPlugin
     private ArcCommandHandler comHandler = null;
 
     static final Logger log = Logger.getLogger("Minecraft");
-    static String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
+    static final String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
     static boolean debug = false;
     static boolean safemode = false;
     
@@ -24,16 +24,17 @@ public class Arctica extends JavaPlugin
     static double extraDamageInAirWhenOutside = 0.0;
     static double baseDamageInWater = 0.0;    
     static double extraDamageInWaterWhenOutside = 0.0;
-    final static double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
-    final static double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces Damage by 25% BEFORE evaluating Cloth bonus.
+    static final double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
+    static final double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces Damage by 25% BEFORE evaluating Cloth bonus.
     
-    static int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)
-    final static int maxMapHeight = 255;
-    final static int horizontalWarmBlockSearchRadius = 5;
-    final static int verticalWarmBlockSearchRadius = 3;
+    static final int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)
+    static final int diagonalTopCheckDistance = 30; //TODO unused? // must be >= sqrt(2* checkRadius²) How far should the plugin check for crafted blocks in 45° angle upwards? 
+    static final int maxMapHeight = 255;
+    static final int horizontalWarmBlockSearchRadius = 5;
+    static final int verticalWarmBlockSearchRadius = 3;
     
     // TODO make configurable??
-    // FIXME Verhalten wenn Spieler tot ist und Respawnen will? Da is was nicht ok... mit den Leben usw.
+    
     //************************************************
     static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
     //************************************************
