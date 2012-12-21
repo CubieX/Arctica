@@ -2,12 +2,12 @@ name: Arctica
 main: com.github.CubieX.Arctica.Arctica
 version: 0.1
 authors: [CubieX]
-description: Adventure game to survive in arctic ice
+description: Adventure game to survive in arctic cold
 
 commands:
     arc:
       description: Using Arctica
-      usage: /arc version | reload
+      usage: /arc status | version | reload
 
 permissions:    
     arctica.use:

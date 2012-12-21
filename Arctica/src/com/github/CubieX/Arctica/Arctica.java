@@ -24,12 +24,11 @@ public class Arctica extends JavaPlugin
     static double extraDamageInAirWhenOutside = 0.0;
     static double baseDamageInWater = 0.0;    
     static double extraDamageInWaterWhenOutside = 0.0;
-    static final double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%. Calculation is BEFORE evaluating cloth bonus.
-    static final double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces Damage by 25% BEFORE evaluating Cloth bonus.
+    static final double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%.
+    static final double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces cold damage by 25%.
     
-    static final int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)
-    static final int diagonalTopCheckDistance = 30; //TODO unused? // must be >= sqrt(2* checkRadius²) How far should the plugin check for crafted blocks in 45° angle upwards? 
-    static final int maxMapHeight = 255;
+    static final int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)     
+    static final int maxMapHeight = 255; // TOP check will fail above this height
     static final int horizontalWarmBlockSearchRadius = 5;
     static final int verticalWarmBlockSearchRadius = 3;
     

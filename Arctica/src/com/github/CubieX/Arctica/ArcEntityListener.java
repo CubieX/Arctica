@@ -57,7 +57,7 @@ public class ArcEntityListener implements Listener
      */
 
     //================================================================================================    
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has MONITOR priority and will be skipped if it has been cancelled before
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has NORMAL priority and will be skipped if it has been cancelled before
     public void onColdDamage(ColdDamageEvent event)
     {
         Player victim = null;

@@ -25,7 +25,8 @@ public class ArcSchedulerHandler
     int handledPlayers = 0;
     int cdSchedTaskID = 0; 
     int playersToAffectCount = 0;
-    static final int neededCraftBlockRows = 2; // amount of vertical rows that must consist of crafted blocks to determine wehter the player is inside or outside
+    static final int neededCraftBlockRows = 2;  // amount of horizontal rows that must consist of crafted blocks to determine whether the player is inside or outside.
+                                                // 2 means, the scan will look for 2 blocks high walls around the player.
 
     public ArcSchedulerHandler(Arctica plugin)
     {
@@ -93,7 +94,7 @@ public class ArcSchedulerHandler
                 playersToAffect.clear();
                 playersToAffectCount = 0;
 
-                //check for all players if they are in snow biome
+                //check for all players if they are in cold biome
                 for(int i = 0; i < onlinePlayerList.length; i++)
                 {
                     Player currPlayer = onlinePlayerList[i];
@@ -140,7 +141,7 @@ public class ArcSchedulerHandler
         plugin.getServer().getScheduler().runTask(plugin, new Runnable()
         {
             @Override
-            public void run() //aktuelle Scandauer: ca. 2 ms/Spieler (begrenzt auf 5x diese Zeit pro Tick!)
+            public void run() //current scan duration: approx. 2 ms/Player (limited to 5x this time per tick!)
             {
                 Player currPlayer = null;
                 boolean currPlayerIsOutside = false;
@@ -409,7 +410,7 @@ public class ArcSchedulerHandler
     boolean NORTHhasCraftedBlock(Location startLocation)
     {
         boolean res = false;
-        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
+        int validCraftBlockRows = 0; // amount of horizontal rows that have been successfully checked for crafted blocks.
 
         // Check NORTH =========================================================
         // Check if there is a block to the NORTH of the players position which is a valid
@@ -448,7 +449,7 @@ public class ArcSchedulerHandler
     boolean EASThasCraftedBlock(Location startLocation)
     {
         boolean res = false;
-        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
+        int validCraftBlockRows = 0; // amount of horizontal rows that have been successfully checked for crafted blocks.
 
         // Check EAST =========================================================
         // Check if there is a block to the EAST of the players position which is a valid
@@ -486,7 +487,7 @@ public class ArcSchedulerHandler
     boolean SOUTHhasCraftedBlock(Location startLocation)
     {
         boolean res = false;
-        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
+        int validCraftBlockRows = 0; // amount of horizontal rows that have been successfully checked for crafted blocks.
 
         // Check SOUTH =========================================================
         // Check if there is a block to the SOUTH of the players position which is a valid
@@ -524,7 +525,7 @@ public class ArcSchedulerHandler
     boolean WESThasCraftedBlock(Location startLocation)
     {
         boolean res = false;
-        int validCraftBlockRows = 0; // amount of horizonal rows that have been successfully checked for crafted blocks.
+        int validCraftBlockRows = 0; // amount of horizontal rows that have been successfully checked for crafted blocks.
 
         // Check WEST =========================================================
         // Check if there is a block to the WEST of the players position which is a valid
@@ -564,7 +565,7 @@ public class ArcSchedulerHandler
         boolean res = false;
 
         // Check NORTH 45 degrees =========================================================
-        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+        // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
@@ -597,7 +598,7 @@ public class ArcSchedulerHandler
         boolean res = false;
 
         // Check EAST 45 degrees =========================================================
-        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+        // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
@@ -624,7 +625,7 @@ public class ArcSchedulerHandler
         boolean res = false;
 
         // Check SOUTH 45 degrees =========================================================
-        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+        // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
@@ -651,7 +652,7 @@ public class ArcSchedulerHandler
         boolean res = false;
 
         // Check WEST 45 degrees =========================================================
-        // Check if there is a valid crafted ceiling block in 45° upwards to the player within given distance
+        // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
         Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
         checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head

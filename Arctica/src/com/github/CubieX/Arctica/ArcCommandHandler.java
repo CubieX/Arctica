@@ -51,7 +51,7 @@ public class ArcCommandHandler implements CommandExecutor
                     }
                     else
                     {
-                        sender.sendMessage(ChatColor.RED + "You du not have sufficient permission to reload " + plugin.getDescription().getName() + "!");
+                        sender.sendMessage(ChatColor.RED + "You do not have sufficient permission to reload " + plugin.getDescription().getName() + "!");
                     }
                 } 
 
@@ -73,7 +73,7 @@ public class ArcCommandHandler implements CommandExecutor
                     }
                     else
                     {
-                        sender.sendMessage(ChatColor.RED + "You du not have sufficient permission to show " + plugin.getDescription().getName() + " status!");
+                        sender.sendMessage(ChatColor.RED + "You do not have sufficient permission to show " + plugin.getDescription().getName() + " status!");
                     }
                 } 
                 return true;
@@ -81,23 +81,23 @@ public class ArcCommandHandler implements CommandExecutor
 
             if (args.length==2)
             {
-                if (args[0].equalsIgnoreCase(".....")) // show the status of the given player
+                if (args[0].equalsIgnoreCase(".....")) // ..................
                 {            
                     if(sender.hasPermission("........"))
                     {
-                        // TODO show status of given player  
+                        
 
                     }
                     else
                     {
-                        sender.sendMessage(ChatColor.RED + "You du not have sufficient permission to see the status of " + plugin.getDescription().getName() + "!");
+                        sender.sendMessage(ChatColor.RED + "You do not have sufficient permission to see the status of " + plugin.getDescription().getName() + "!");
                     }
                 }
             }
 
             if (args.length==3)
             {
-                if (args[0].equalsIgnoreCase("....")) // take away days for the promoted rank for the player
+                if (args[0].equalsIgnoreCase("....")) // ...............
                 {                   
                     if(sender.hasPermission(".........."))
                     {
@@ -105,7 +105,7 @@ public class ArcCommandHandler implements CommandExecutor
                     }
                     else
                     {
-                        sender.sendMessage(ChatColor.RED + "You du not have sufficient permission to manage ranks!");
+                        sender.sendMessage(ChatColor.RED + "You do not have sufficient permission to manage ranks!");
                     }                   
                 }
                 return true;
