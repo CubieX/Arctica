@@ -188,7 +188,8 @@ public class Arctica extends JavaPlugin
 
     @Override
     public void onDisable()
-    {               
+    {
+        getServer().getScheduler().cancelTasks(this);
         eListener = null;
         cHandler = null;       
         schedHandler = null;

@@ -2,16 +2,11 @@ package com.github.CubieX.Arctica;
 
 import java.util.ArrayList;
 
-import net.minecraft.server.Entity;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
-import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.CraftWorld;
-import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 public class ArcSchedulerHandler
