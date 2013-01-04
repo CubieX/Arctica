@@ -1,5 +1,9 @@
 Changelog for Arctica by CubieX
 --------------------------------
 
-V. 0.1
+V. 1.1.0
+- added fire fueling mechanism (modify when finished!)
+
+V. 0.1 / V 1.0.0
 - Initial version
+- Tagged as V1.0.0 !

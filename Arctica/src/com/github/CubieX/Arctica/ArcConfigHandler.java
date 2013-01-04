@@ -9,15 +9,13 @@ import org.bukkit.configuration.file.FileConfiguration;
 public class ArcConfigHandler
 {
     private final Arctica plugin;
-    private final Logger log;
     
     private FileConfiguration config;
 
     //Constructor
-    public ArcConfigHandler(Arctica plugin, Logger log)
+    public ArcConfigHandler(Arctica plugin)
     {        
         this.plugin = plugin;
-        this.log = log;
 
         initConfig();        
     }

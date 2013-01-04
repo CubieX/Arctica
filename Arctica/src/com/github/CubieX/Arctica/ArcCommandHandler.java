@@ -12,13 +12,11 @@ public class ArcCommandHandler implements CommandExecutor
 {
     private final Arctica plugin;
     private final ArcConfigHandler cHandler;
-    private final Logger log;
 
-    public ArcCommandHandler(Arctica plugin, Logger log, ArcConfigHandler cHandler)
+    public ArcCommandHandler(Arctica plugin, ArcConfigHandler cHandler)
     {
         this.plugin = plugin;
         this.cHandler = cHandler;
-        this.log = log;
     }
 
     @Override
