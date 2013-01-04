@@ -256,7 +256,7 @@ public class ArcSchedulerHandler
                                         //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
                                     }
 
-                                    // Combined caculation. Some values will be 0, depending on above evaluation
+                                    // Combined calculation. Some values will be 0, depending on above evaluation
                                     realDamageToApply = (int)Math.ceil(((
                                             baseDamageInAirToApply +
                                             extraDamageInAirWhenOutsideToApply +
