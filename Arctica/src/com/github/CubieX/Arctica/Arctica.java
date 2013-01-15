@@ -46,7 +46,7 @@ public class Arctica extends JavaPlugin
    @Override
    public void onEnable()
    {
-      cHandler = new ArcConfigHandler(this);       
+      cHandler = new ArcConfigHandler(this);
 
       if(!checkConfigFileVersion())
       {
