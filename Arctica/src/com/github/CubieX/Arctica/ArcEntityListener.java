@@ -1,7 +1,6 @@
 package com.github.CubieX.Arctica;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -132,13 +131,38 @@ public class ArcEntityListener implements Listener
 
    //================================================================================================
    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-   public void onBlockIgniteEvent(BlockIgniteEvent event)
+   public void onBlockPlaceEvent(BlockPlaceEvent event)
    {
-      // TODO Almost EVERY block can be ignited! Non-flammable blocks will burn for a short amount of time!
-      // So checking those registered fireplaces is mandatory, and/or upon registration the block underneath the ingited block has to be
-      // pre-checked for flammable material before actually registering this fire place!
+      // Check if placed block is a flammable block which may be used as fuel for a fire ************************
+      if(plugin.isFlammableBlock(event.getBlock().getTypeId()))
+      {
+         Block blockUnderPlacedBlock = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
+               getBlockAt((int)event.getBlock().getX(),
+                     (int)event.getBlock().getY() - 1,
+                     (int)event.getBlock().getZ());
 
-      if(event.getCause() == IgniteCause.FLINT_AND_STEEL)
+         if(null != blockUnderPlacedBlock)
+         {
+            if(Material.FIRE == blockUnderPlacedBlock.getType())
+            {
+               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Brennbarer Block ueber Feuerstelle erkannt.");}             
+
+               // query for the fire (blockUnderPlacedBlock) in data file and update "dieTime" timestamp to new current time + burnDuration
+               // if it is a registered fire.
+               if(plugin.blockIsRegisteredFire(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ()))
+               {
+                  // Caution: this method needs the coordinates of the fire, but the group of the placed block!
+                  plugin.updateFueledFireOnFireList(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ(), plugin.getFuelGroup(event.getBlock().getTypeId()));
+                  if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses registrierte Feuer wurde gefuettert.");}
+                  return; // only one of these checks can be successful. So skip the others to keep the time in here short.
+               }
+            }
+         }
+      }
+
+      // ************ Check if placed block is FIRE and if so, register it, if it is placed on a flammable block **********************
+
+      if(Material.FIRE == event.getBlock().getType())
       {
          Block blockUnderFire = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
                getBlockAt((int)event.getBlock().getX(),
@@ -150,38 +174,21 @@ public class ArcEntityListener implements Listener
             int xFire = event.getBlock().getX();
             int yFire = event.getBlock().getY();
             int zFire = event.getBlock().getZ();
+
+            plugin.addNewFireToFireList(xFire, yFire, zFire);
             if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Neue entflammtes Feuer bei " + xFire + ", " + yFire + ", " + zFire + " registriert.");}
-
-            // TODO add fire position to SQLite DB or data file (SQLite recommended) with current time as lastFueled timestamp
-            long currTime = ((Calendar)Calendar.getInstance()).getTimeInMillis();  
-         }         
-      }
-   }
-
-   //================================================================================================
-   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-   public void onBlockPlaceEvent(BlockPlaceEvent event)
-   {
-      Block blockUnderPlacedBlock = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
-            getBlockAt((int)event.getBlock().getX(),
-                  (int)event.getBlock().getY() - 1,
-                  (int)event.getBlock().getZ());
-
-      if(null != blockUnderPlacedBlock)
-      {
-         if(Material.FIRE == blockUnderPlacedBlock.getType())
-         {
-            // TODO lookup fire block in DB or data file and get its position
-
-            if(plugin.isFlammableBlock(event.getBlock().getTypeId()))
-            {             
-               // TODO query for the fire (blockUnderPlacedBlock) in DB or data file and update "lastFueled" timestamp to current time
-               long currTime = ((Calendar)Calendar.getInstance()).getTimeInMillis();
-               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Brennbarer Block ueber Feuerstelle erkannt.");}             
-
-            }
+            return; // only one of these checks can be successful. So skip the others to keep the time in here short.
          }
       }
+
+      // ************* check if player has placed a block at the spot of a registered fire (thus extinguished it) and if so, delete the fire from file **********
+      if(plugin.blockIsRegisteredFire(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ()))
+      {
+         plugin.removeDiedFireFromFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ());                  
+         if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Feuerstelle aus Liste geloescht!");}
+      }
+
+      return; // only one of these checks can be successful. So skip the others to keep the time in here short.
    }
 
    //================================================================================================
@@ -192,13 +199,16 @@ public class ArcEntityListener implements Listener
       {
          if(event.getAction() == Action.LEFT_CLICK_BLOCK)
          {
-            // first arg is transparent block, second arg is maxDistance to scan. 5 is default reach for players.
-            if (event.getPlayer().getTargetBlock(null, 5).getType() == Material.FIRE)
-            {
-               // TODO lookup fire block in DB or data file and get its position         
-               // IF lookup was successful (= a fire at that position is registered), delete this fireplace from DB or data file
+            Block targetedBlock = event.getPlayer().getTargetBlock(null, 5); // first arg is transparent block, second arg is maxDistance to scan. 5 is default reach for players.
 
-               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Feuerstelle aus DB geloescht! (implementation pending!)");} 
+            if ((null != targetedBlock) && (targetedBlock.getType() == Material.FIRE))
+            {
+               // check if player is about to extinguish a registered fire with his hands or a tool (and not a Block)
+               if(plugin.blockIsRegisteredFire(targetedBlock.getX(), targetedBlock.getY(), targetedBlock.getZ()))
+               {
+                  plugin.removeDiedFireFromFireList(targetedBlock.getX(), targetedBlock.getY(), targetedBlock.getZ());                  
+                  if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Feuerstelle aus Liste geloescht!");}
+               }
             }
          }
       }

@@ -1,7 +1,7 @@
 package com.github.CubieX.Arctica;
 
+import java.util.Calendar;
 import java.util.logging.Logger;
-
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -16,9 +16,14 @@ public class Arctica extends JavaPlugin
 
    public static final Logger log = Logger.getLogger("Minecraft");
    static final String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
+   
+   public static enum fuelGroups{NONE, WOOL, CRAFTED_WOOD, LOG, COAL_ORE};
+   
    static boolean debug = false;
    static boolean safemode = false;
 
+   static final int initialBurnDuration = 10; // time in seconds how long a fresh enlit fire will burn, without providing a fuel block above it
+   
    static int damageApplyPeriod = 10; // seconds to apply the cold damage (cyclic)
    static double baseDamageInAir = 0.0;
    static double extraDamageInAirWhenOutside = 0.0;
@@ -27,18 +32,19 @@ public class Arctica extends JavaPlugin
    static final double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%.
    static final double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces cold damage by 25%.
 
-   static final int checkRadius = 20; // how far should the plugin check for crafted blocks? (used for "Player is outside" check)     
-   static final int maxMapHeight = 255; // TOP check will fail above this height
+   static final int checkRadius = 20;     // how far should the plugin check for crafted blocks? (used for "Player is outside" check)     
+   static final int maxMapHeight = 255;   // TOP check will fail above this height
    static final int horizontalWarmBlockSearchRadius = 5;
    static final int verticalWarmBlockSearchRadius = 3;
 
-   static int burnDuration_Wool = 1; // time in minutes
-   static int burnDuration_CraftedWood = 2; // time in minutes
-   static int burnDuration_Log = 4; // time in minutes
-   static int burnDuration_CoalOre = 8; // time in minutes
+   static int burnDuration_Wool = 1;         // time in minutes
+   static int burnDuration_CraftedWood = 2;  // time in minutes
+   static int burnDuration_Log = 4;          // time in minutes
+   static int burnDuration_CoalOre = 8;      // time in minutes
 
-   // TODO make configurable??
-
+   static int fuelBlockConsumeThreshold = 80;   // time in percent of burnDuratio of each material when the fuel block on top of
+   // the fire will be consumed to show players that this fire will die soon
+   
    //************************************************
    static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
    //************************************************
@@ -110,61 +116,77 @@ public class Arctica extends JavaPlugin
    public void readConfigValues()
    {
       boolean exceed = false;
-      
+
       debug = this.getConfig().getBoolean("debug");
 
       safemode = this.getConfig().getBoolean("safemode");
 
       damageApplyPeriod = this.getConfig().getInt("damageApplyPeriod");
-      if(Arctica.damageApplyPeriod > 60) damageApplyPeriod = 60;
-      if(Arctica.damageApplyPeriod < 5) damageApplyPeriod = 5;
-      exceed = true;
-
-      baseDamageInAir = (double)this.getConfig().getInt("baseDamageInAir");
-      if(Arctica.baseDamageInAir > 20) baseDamageInAir = 20;
-      if(Arctica.baseDamageInAir < 0) baseDamageInAir = 0;
-      exceed = true;
+      if(Arctica.damageApplyPeriod > 60){ damageApplyPeriod = 60; exceed = true; }
+      if(Arctica.damageApplyPeriod < 5){ damageApplyPeriod = 5; exceed = true; }
       
+      baseDamageInAir = (double)this.getConfig().getInt("baseDamageInAir");
+      if(Arctica.baseDamageInAir > 20) { baseDamageInAir = 20; exceed = true; }
+      if(Arctica.baseDamageInAir < 0) { baseDamageInAir = 0; exceed = true; }
+     
       baseDamageInWater = (double)this.getConfig().getInt("baseDamageInWater");
-      if(baseDamageInWater > 20) baseDamageInWater = 20;
-      if(baseDamageInWater < 0) baseDamageInWater = 0;
-      exceed = true;
+      if(baseDamageInWater > 20) { baseDamageInWater = 20; exceed = true; }
+      if(baseDamageInWater < 0) { baseDamageInWater = 0; exceed = true; }
       
       extraDamageInAirWhenOutside = (double)this.getConfig().getInt("extraDamageInAirWhenOutside");
-      if(extraDamageInAirWhenOutside > 20) extraDamageInAirWhenOutside = 20;
-      if(extraDamageInAirWhenOutside < 0) extraDamageInAirWhenOutside = 0;
-      exceed = true;
-      
+      if(extraDamageInAirWhenOutside > 20) { extraDamageInAirWhenOutside = 20; exceed = true; }
+      if(extraDamageInAirWhenOutside < 0) { extraDamageInAirWhenOutside = 0; exceed = true; }
+     
       extraDamageInWaterWhenOutside = (double)this.getConfig().getInt("extraDamageInWaterWhenOutside");
-      if(extraDamageInWaterWhenOutside > 20) extraDamageInWaterWhenOutside = 20;
-      if(extraDamageInWaterWhenOutside < 0) extraDamageInWaterWhenOutside = 0;
-      exceed = true;
-      
+      if(extraDamageInWaterWhenOutside > 20) { extraDamageInWaterWhenOutside = 20; exceed = true; }
+      if(extraDamageInWaterWhenOutside < 0) { extraDamageInWaterWhenOutside = 0; exceed = true; }
+     
       burnDuration_Wool = this.getConfig().getInt("burnDuration_Wool");
-      if(burnDuration_Wool > 3600) burnDuration_Wool = 3600;
-      if(burnDuration_Wool < 1) burnDuration_Wool = 1;
-      exceed = true;
-      
+      if(burnDuration_Wool > 3600) { burnDuration_Wool = 3600; exceed = true; }
+      if(burnDuration_Wool < 1) { burnDuration_Wool = 1; exceed = true; }
+     
       burnDuration_CraftedWood = this.getConfig().getInt("burnDuration_CraftedWood");
-      if(burnDuration_CraftedWood > 3600) burnDuration_CraftedWood = 3600;
-      if(burnDuration_CraftedWood < 1) burnDuration_CraftedWood = 1;
-      exceed = true;
-      
+      if(burnDuration_CraftedWood > 3600) { burnDuration_CraftedWood = 3600; exceed = true; }
+      if(burnDuration_CraftedWood < 1) { burnDuration_CraftedWood = 1; exceed = true; }
+    
       burnDuration_Log = this.getConfig().getInt("burnDuration_Log");
-      if(burnDuration_Log > 3600) burnDuration_Log = 3600;
-      if(burnDuration_Log < 1) burnDuration_Log = 1;
-      exceed = true;
-      
+      if(burnDuration_Log > 3600) { burnDuration_Log = 3600; exceed = true; }
+      if(burnDuration_Log < 1) { burnDuration_Log = 1; exceed = true; }
+   
       burnDuration_CoalOre = this.getConfig().getInt("burnDuration_CoalOre");
-      if(burnDuration_CoalOre > 3600) burnDuration_CoalOre = 3600;
-      if(burnDuration_CoalOre < 1) burnDuration_CoalOre = 1;
-      exceed = true;
-      
+      if(burnDuration_CoalOre > 3600) { burnDuration_CoalOre = 3600; exceed = true; }
+      if(burnDuration_CoalOre < 1) { burnDuration_CoalOre = 1; exceed = true; }
+    
+      fuelBlockConsumeThreshold = this.getConfig().getInt("fuelBlockConsumeThreshold");
+      if(fuelBlockConsumeThreshold > 100) { fuelBlockConsumeThreshold = 100; exceed = true; }
+      if(fuelBlockConsumeThreshold < 50) { fuelBlockConsumeThreshold = 50; exceed = true; }
+           
       if(exceed)
       {
          log.warning(logPrefix + "A config value is out of it's allowed range! Please check config file.");
       }
+   }   
+
+   void disablePlugin()
+   {
+      getServer().getPluginManager().disablePlugin(this);        
    }
+
+   @Override
+   public void onDisable()
+   {
+      cHandler.saveFireListFile();
+      getServer().getScheduler().cancelTasks(this);
+      eListener = null;
+      cHandler = null;       
+      schedHandler = null;
+      comHandler = null;
+      log.info(getDescription().getName() + " version " + getDescription().getVersion() + " is disabled!");
+   }
+
+   // *****************************************************
+   // Player dependent methods
+   // *****************************************************
 
    // Calculates the factor for damage reduction from players worn armor. Max. 0.8 = 80% DamRed
    public double getDamageReduceFactorFromCloth(Player player)
@@ -218,30 +240,83 @@ public class Arctica extends JavaPlugin
       return (eListener.playerIsHoldingTorch(playerName));
    }
 
-   // this does not use Minecrafts "flammable" marker! It checks if the block is a valid fueling material for fire.
+   // this does NOT use Minecrafts "flammable" marker! It checks if the block is a valid fueling material for fire.
+   // this is configured in the list in the scheduler handler
    public boolean isFlammableBlock(int itemID)
    {       
       return (schedHandler.isFlammableBlock(itemID));
    }
-   
+
    public boolean playerIsAffected(Player player) // returns whether or not a player is currently affected by Arctica
    {      
       return (schedHandler.playerIsAffected(player));
    }
 
-   void disablePlugin()
-   {
-      getServer().getPluginManager().disablePlugin(this);        
+   // *****************************************************
+   // Fire list actions
+   // *****************************************************
+
+   public void addNewFireToFireList(int x, int y, int z)
+   {      
+      long dieTime = getCurrTimeInMillis() + (long)(initialBurnDuration * 1000);
+      cHandler.getFireListFile().set(x + "_" + y + "_" + z + ".dieTime", dieTime); // adds the fire and the time it will die 
+      cHandler.saveFireListFile();
    }
 
-   @Override
-   public void onDisable()
+   public void updateFueledFireOnFireList(int x, int y, int z, fuelGroups group)
    {
-      getServer().getScheduler().cancelTasks(this);
-      eListener = null;
-      cHandler = null;       
-      schedHandler = null;
-      comHandler = null;
-      log.info(getDescription().getName() + " version " + getDescription().getVersion() + " is disabled!");
-   }   
+      int burnDurationInMS = 0;
+
+      switch(group)
+      {
+      case WOOL:
+         burnDurationInMS = burnDuration_Wool * 60 * 1000;
+         break;
+      case CRAFTED_WOOD:
+         burnDurationInMS = burnDuration_CraftedWood * 60 * 1000;
+         break;
+      case LOG:
+         burnDurationInMS = burnDuration_Log * 60 * 1000;
+         break;
+      case COAL_ORE:
+         burnDurationInMS = burnDuration_CoalOre * 60 * 1000;
+         break;
+      default:
+         // there is a group missing here which is present in the config!
+         break;
+      }
+
+      long newDieTime = getCurrTimeInMillis() + (long)burnDurationInMS; // fire will die when this time is reached
+      cHandler.getFireListFile().set(x + "_" + y + "_" + z + ".dieTime", newDieTime);
+      cHandler.saveFireListFile();
+   }
+
+   public void removeDiedFireFromFireList(int x, int y, int z)
+   {
+      cHandler.getFireListFile().set(x + "_" + y + "_" + z, null); // delete the entry
+      cHandler.saveFireListFile();
+   }
+   
+   public boolean blockIsRegisteredFire(int x, int y, int z)
+   {
+      boolean isRegisteredFire = false;
+      
+      // lookup block in list to see if it is a registered fire
+      if(cHandler.getFireListFile().contains(x + "_" + y + "_" + z))
+      {
+         isRegisteredFire = true;
+      }
+      
+      return(isRegisteredFire);
+   }
+
+   public long getCurrTimeInMillis()
+   {
+      return ((Calendar)Calendar.getInstance()).getTimeInMillis();
+   }
+   
+   public Arctica.fuelGroups getFuelGroup(int blockID)
+   {
+      return (schedHandler.getFuelGroup(blockID));
+   }
 }

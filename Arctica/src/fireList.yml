@@ -1,0 +1,11 @@
+# **************************
+# List of registered Fires *
+# **************************
+# Timestamp is the UNIX time when the fire dies
+# *****************************************************
+# a fire entry look like:
+# x_y_z:
+#   dieTime: 1356723668788
+# *****************************************************
+# do NOT change the file version.
+config_version: 1

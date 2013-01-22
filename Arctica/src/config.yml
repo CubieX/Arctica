@@ -20,12 +20,14 @@ extraDamageInAirWhenOutside: 2
 # additional damage for each cold damage application when being outside
 # in water (will be added to base damage in water) (0-20)
 extraDamageInWaterWhenOutside: 4
-# burning duration in minutes for firewood (1-3600)
+# burning duration in minutes for flammable materials (1-3600)
 # Wool blocks
 burnDuration_Wool: 1
-# Crafted wood like 'wooden planks' or 'stair', 'fence' ect.
+# Crafted wood like 'wooden planks' or 'stair' or 'fence' ect.
 burnDuration_CraftedWood: 2
 # raw wooden logs
 burnDuration_Log: 4
 # coal ore (farmed with silk touch)
 burnDuration_CoalOre: 8
+# fuel block consume threshold in percent of burnDuration (50-100)
+fuelBlockConsumeThreshold: 80

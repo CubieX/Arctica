@@ -1,7 +1,5 @@
 package com.github.CubieX.Arctica;
 
-import java.util.logging.Logger;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

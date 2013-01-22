@@ -15,7 +15,10 @@ public class ArcSchedulerHandler
 
    ArrayList<Integer> craftedBlocksIDlist = new ArrayList<Integer>();
    ArrayList<Integer> warmBlocksIDlist = new ArrayList<Integer>();
-   ArrayList<Integer> flammableBlocksIDlist = new ArrayList<Integer>();
+   ArrayList<Integer> flammableBlocksGroupIDlist_Wool = new ArrayList<Integer>();
+   ArrayList<Integer> flammableBlocksGroupIDlist_CraftedWood = new ArrayList<Integer>();
+   ArrayList<Integer> flammableBlocksGroupIDlist_Log = new ArrayList<Integer>();
+   ArrayList<Integer> flammableBlocksGroupIDlist_CoalOre = new ArrayList<Integer>();
    ArrayList<String> playersToAffect = new ArrayList<String>();
    static final int playersToHandleEachTick = 5; // set this dependent on the 'checked block count' for each player, to prevent overloading a tick time frame!
    int handledPlayers = 0;
@@ -30,7 +33,10 @@ public class ArcSchedulerHandler
 
       initCraftedBlocksIDlist();
       initWarmBlocksIDlist();
-      initFlammableBlocksIDlist();
+      initFlammableBlocksGroupIDlist_Wool();
+      initFlammableBlocksGroupIDlist_CraftedWood();
+      initFlammableBlocksGroupIDlist_Log();
+      initFlammableBlocksGroupIDlist_CoalOre();
    }
 
    /* These Blocks will be accepted as suitable for building a safe shelter
@@ -80,17 +86,32 @@ public class ArcSchedulerHandler
    }
 
    /* These Blocks will be accepted as flammable blocks to feed the fire */
-   /* TODO eventuell abhängig vom Material unterschiedliche Brenndauern? (z.B. Holzlatten oder Log oder Wolle....) */
-   void initFlammableBlocksIDlist()
+   void initFlammableBlocksGroupIDlist_Wool()
+   {      
+      flammableBlocksGroupIDlist_Wool.add(35);      
+   }
+
+   /* These Blocks will be accepted as flammable blocks to feed the fire */
+   void initFlammableBlocksGroupIDlist_CraftedWood()
    {
-      flammableBlocksIDlist.add(5);
-      flammableBlocksIDlist.add(17);
-      flammableBlocksIDlist.add(35);
-      flammableBlocksIDlist.add(53);
-      flammableBlocksIDlist.add(85);
-      flammableBlocksIDlist.add(126);
-      flammableBlocksIDlist.add(134);
-      flammableBlocksIDlist.add(136);
+      flammableBlocksGroupIDlist_CraftedWood.add(5);    
+      flammableBlocksGroupIDlist_CraftedWood.add(53);
+      flammableBlocksGroupIDlist_CraftedWood.add(85);
+      flammableBlocksGroupIDlist_CraftedWood.add(126);
+      flammableBlocksGroupIDlist_CraftedWood.add(134);
+      flammableBlocksGroupIDlist_CraftedWood.add(136);
+   }
+
+   /* These Blocks will be accepted as flammable blocks to feed the fire */
+   void initFlammableBlocksGroupIDlist_Log()
+   {      
+      flammableBlocksGroupIDlist_Log.add(17);     
+   }
+
+   /* These Blocks will be accepted as flammable blocks to feed the fire */
+   void initFlammableBlocksGroupIDlist_CoalOre()
+   {
+      flammableBlocksGroupIDlist_CoalOre.add(16);      
    }
 
    public void startColdDamageScheduler_SyncRep()
@@ -146,9 +167,24 @@ public class ArcSchedulerHandler
       }, (20*5L), 20*Arctica.damageApplyPeriod); // 5 sec delay, configurable period in seconds
    }
 
-   // TODO When checking all registered fire places, also check if there is still fire present. If not, remove the fire place from DB or data file.
-   // if check is only done for fire in range of a player, the use a seperate scheduler to check and cleanup the DB/file cyclic
-   // while checking for fire blocks at registered positions.
+   public void startFireCheckerScheduler_SyncRep()
+   {
+      // this is a synchronous repeating task
+      plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            // TODO When checking all registered fire places, also check if there is still fire present. If not, remove the fire place from data file.
+            // if check is only done for fire in range of a player, then use a seperate scheduler to check and cleanup the file cyclic
+            // while checking for fire blocks at registered positions.
+            // TODO performance test with big fire list!
+            // TODO cycle through all fires in fireList.yml and check dieTime. If a fires dieTime is expired, delete the fire block and delete the fire from file
+            // TODO use this Scheduler also, to check if the configured percentage of "burnDuration" of the fuel Block has expired, id if so, remove the block
+            // to show the player, that this fire is about to die
+         }
+      }, (20*5L), 20*10); // 5 sec delay, 10 sec period
+   }
 
    void task_applyColdDamage() // this will be run as many ticks as needed to handle all players.
    {   
@@ -762,12 +798,43 @@ public class ArcSchedulerHandler
    {
       boolean res = false;
 
-      if(flammableBlocksIDlist.contains(itemID))
+      if((flammableBlocksGroupIDlist_Wool.contains(itemID)) ||
+            (flammableBlocksGroupIDlist_CraftedWood.contains(itemID)) ||
+            (flammableBlocksGroupIDlist_Log.contains(itemID)) ||
+            (flammableBlocksGroupIDlist_CoalOre.contains(itemID)))
       {
          res = true;
       }
 
       return (res);
+   }
+
+   public Arctica.fuelGroups getFuelGroup(int blockID)
+   {
+      Arctica.fuelGroups group = Arctica.fuelGroups.NONE;
+
+      if(flammableBlocksGroupIDlist_Wool.contains(blockID))
+      {
+         group = Arctica.fuelGroups.WOOL;
+      }
+      else if(flammableBlocksGroupIDlist_CraftedWood.contains(blockID))
+      {
+         group = Arctica.fuelGroups.CRAFTED_WOOD;
+      }
+      else if(flammableBlocksGroupIDlist_Log.contains(blockID))
+      {
+         group = Arctica.fuelGroups.LOG;
+      }
+      else if(flammableBlocksGroupIDlist_CoalOre.contains(blockID))
+      {
+         group = Arctica.fuelGroups.COAL_ORE;
+      }
+      else
+      {
+         // block with this ID is not a valid flammable block, so it has no Group
+      }      
+
+      return (group);
    }
 
    public boolean playerIsAffected(Player player) // returns whether or not a player is currently affected by Arctica
