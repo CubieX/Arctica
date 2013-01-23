@@ -9,8 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockIgniteEvent;
-import org.bukkit.event.block.BlockIgniteEvent.IgniteCause;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -98,23 +97,25 @@ public class ArcEntityListener implements Listener
    public void onPlayerItemHeld(PlayerItemHeldEvent event)
    {
       try
-      {             
+      {
          if((event.getPlayer().hasPermission("arctica.use")) &&
                (!event.getPlayer().hasPermission("arctica.immune")))
-         {               
+         {
             ItemStack newItem;            
             newItem = event.getPlayer().getInventory().getItem(event.getNewSlot());
             if ((null != newItem) &&
                   (newItem.getTypeId() == 50)) // Check if held item is a torch. Is null if empty slot.
             {
-               if(!playersHoldingTorch.contains(event.getPlayer().getName()))
+               if((plugin.playerIsAffected(event.getPlayer())) &&
+                     (!playersHoldingTorch.contains(event.getPlayer().getName())))
                {
                   //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus EIN.");}
                   playersHoldingTorch.add(event.getPlayer().getName());
                }
             }
-            else // Player with permission has no torch in hand, so delete him from the List if he's on it.
-            {                        
+            else  // Player with permission has no torch in hand, so delete him from the List if he's on it.
+            {     // This should always be done, even if the player is currently not affected, to prevent exploiting the mechanism
+               // Through leaving the cold biome
                if(playersHoldingTorch.contains(event.getPlayer().getName()))
                {
                   //if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.GREEN + "Fackel-Bonus AUS.");}
@@ -133,59 +134,60 @@ public class ArcEntityListener implements Listener
    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
    public void onBlockPlaceEvent(BlockPlaceEvent event)
    {
-      // Check if placed block is a flammable block which may be used as fuel for a fire ************************
-      if(plugin.isFlammableBlock(event.getBlock().getTypeId()))
+      if(plugin.posIsWithinColdBiome(event.getBlock().getX(), event.getBlock().getZ()))
       {
-         Block blockUnderPlacedBlock = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
-               getBlockAt((int)event.getBlock().getX(),
-                     (int)event.getBlock().getY() - 1,
-                     (int)event.getBlock().getZ());
-
-         if(null != blockUnderPlacedBlock)
+         // Check if placed block is a block which may be used as fuel for a fire ************************
+         if(plugin.isFuelBlock(event.getBlock().getTypeId()))
          {
-            if(Material.FIRE == blockUnderPlacedBlock.getType())
-            {
-               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Brennbarer Block ueber Feuerstelle erkannt.");}             
+            Block blockUnderPlacedBlock = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
+                  getBlockAt((int)event.getBlock().getX(),
+                        (int)event.getBlock().getY() - 1,
+                        (int)event.getBlock().getZ());
 
-               // query for the fire (blockUnderPlacedBlock) in data file and update "dieTime" timestamp to new current time + burnDuration
-               // if it is a registered fire.
-               if(plugin.blockIsRegisteredFire(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ()))
+            if(null != blockUnderPlacedBlock)
+            {
+               if(Material.FIRE == blockUnderPlacedBlock.getType())
                {
-                  // Caution: this method needs the coordinates of the fire, but the group of the placed block!
-                  plugin.updateFueledFireOnFireList(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ(), plugin.getFuelGroup(event.getBlock().getTypeId()));
-                  if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses registrierte Feuer wurde gefuettert.");}
-                  return; // only one of these checks can be successful. So skip the others to keep the time in here short.
+                  // query for the fire (blockUnderPlacedBlock) in data file and update "dieTime" timestamp to new current time + burnDuration
+                  // if it is a registered fire.
+                  if(plugin.blockIsRegisteredFire(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ()))
+                  {
+                     // Caution: this method needs the coordinates of the fire, but the group of the placed block!
+                     plugin.updateFueledFireOnFireList(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ(), plugin.getFuelGroup(event.getBlock().getTypeId()));
+                     if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses registrierte Feuer wurde gefuettert und brennt weitere " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(event.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");}
+                     return; // only one of these checks can be successful. So skip the others to keep the time in here short.
+                  }
                }
             }
          }
-      }
 
-      // ************ Check if placed block is FIRE and if so, register it, if it is placed on a flammable block **********************
+         // ************ Check if placed block is FIRE and if so, register it, if it is placed on a flammable block **********************
 
-      if(Material.FIRE == event.getBlock().getType())
-      {
-         Block blockUnderFire = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
-               getBlockAt((int)event.getBlock().getX(),
-                     (int)event.getBlock().getY() - 1,
-                     (int)event.getBlock().getZ());
-
-         if(blockUnderFire.getType().isFlammable()) // if it's not flammable, it could be ignitable anyway, but will only burn a couple of seconds.
+         if(Material.FIRE == event.getBlock().getType())
          {
-            int xFire = event.getBlock().getX();
-            int yFire = event.getBlock().getY();
-            int zFire = event.getBlock().getZ();
+            Block blockUnderFire = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
+                  getBlockAt((int)event.getBlock().getX(),
+                        (int)event.getBlock().getY() - 1,
+                        (int)event.getBlock().getZ());
 
-            plugin.addNewFireToFireList(xFire, yFire, zFire);
-            if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Neue entflammtes Feuer bei " + xFire + ", " + yFire + ", " + zFire + " registriert.");}
-            return; // only one of these checks can be successful. So skip the others to keep the time in here short.
+            if(blockUnderFire.getType().isFlammable()) // if it's not flammable, it could be ignitable anyway, but will only burn a couple of seconds.
+            {
+               int xFire = event.getBlock().getX();
+               int yFire = event.getBlock().getY();
+               int zFire = event.getBlock().getZ();
+
+               plugin.addNewFireToFireList(xFire, yFire, zFire);
+               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Neu entflammtes Feuer bei " + xFire + ", " + yFire + ", " + zFire + " registriert.");}
+               return; // only one of these checks can be successful. So skip the others to keep the time in here short.
+            }
          }
-      }
 
-      // ************* check if player has placed a block at the spot of a registered fire (thus extinguished it) and if so, delete the fire from file **********
-      if(plugin.blockIsRegisteredFire(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ()))
-      {
-         plugin.removeDiedFireFromFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ());                  
-         if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Feuerstelle aus Liste geloescht!");}
+         // ************* check if player has placed a block at the spot of a registered fire (thus extinguished it) and if so, delete the fire from file **********
+         if(plugin.blockIsRegisteredFire(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ()))
+         {
+            plugin.removeDiedFireFromFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ());                  
+            if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Feuerstelle aus Liste geloescht!");}
+         }
       }
 
       return; // only one of these checks can be successful. So skip the others to keep the time in here short.
@@ -195,8 +197,8 @@ public class ArcEntityListener implements Listener
    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
    public void onPlayerInteract(PlayerInteractEvent event)
    {
-      if(plugin.playerIsAffected(event.getPlayer()))
-      {
+      if(plugin.posIsWithinColdBiome(event.getPlayer().getTargetBlock(null, 5).getX(), event.getPlayer().getTargetBlock(null, 5).getZ()))
+      {         
          if(event.getAction() == Action.LEFT_CLICK_BLOCK)
          {
             Block targetedBlock = event.getPlayer().getTargetBlock(null, 5); // first arg is transparent block, second arg is maxDistance to scan. 5 is default reach for players.
@@ -208,6 +210,37 @@ public class ArcEntityListener implements Listener
                {
                   plugin.removeDiedFireFromFireList(targetedBlock.getX(), targetedBlock.getY(), targetedBlock.getZ());                  
                   if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Feuerstelle aus Liste geloescht!");}
+               }
+            }
+         }
+      }      
+   }
+
+   //================================================================================================
+   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+   public void onBlockBreakEvent(BlockBreakEvent event)
+   {
+      if(plugin.posIsWithinColdBiome(event.getBlock().getX(), event.getBlock().getZ()))
+      {
+         // Check if broken block is a block which may be used as fuel for a fire ************************
+         if(plugin.isFuelBlock(event.getBlock().getTypeId()))
+         {
+            Block blockUnderPlacedBlock = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
+                  getBlockAt((int)event.getBlock().getX(),
+                        (int)event.getBlock().getY() - 1,
+                        (int)event.getBlock().getZ());
+
+            if(null != blockUnderPlacedBlock)
+            {
+               if(Material.FIRE == blockUnderPlacedBlock.getType())
+               {               
+                  // if it is a registered fire.
+                  if(plugin.blockIsRegisteredFire(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ()))
+                  {
+                     // Caution: this method needs the coordinates of the fire, but the group of the placed block!
+                     plugin.updateFueledFireOnFireList(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ(), Arctica.fuelGroups.NONE);
+                     if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Diesem Feuer wurde das Brennmaterial entzogen. Es wird in kuerze verloeschen!");}
+                  }
                }
             }
          }

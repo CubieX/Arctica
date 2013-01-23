@@ -1,24 +1,26 @@
 package com.github.CubieX.Arctica;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.block.Biome;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 public class ArcSchedulerHandler
 {
    private Arctica plugin = null;
-
+   private ArcConfigHandler cHandler = null;
    ArrayList<Integer> craftedBlocksIDlist = new ArrayList<Integer>();
    ArrayList<Integer> warmBlocksIDlist = new ArrayList<Integer>();
-   ArrayList<Integer> flammableBlocksGroupIDlist_Wool = new ArrayList<Integer>();
-   ArrayList<Integer> flammableBlocksGroupIDlist_CraftedWood = new ArrayList<Integer>();
-   ArrayList<Integer> flammableBlocksGroupIDlist_Log = new ArrayList<Integer>();
-   ArrayList<Integer> flammableBlocksGroupIDlist_CoalOre = new ArrayList<Integer>();
+   ArrayList<Integer> fuelBlocksGroupIDlist_Wool = new ArrayList<Integer>();
+   ArrayList<Integer> fuelBlocksGroupIDlist_CraftedWood = new ArrayList<Integer>();
+   ArrayList<Integer> fuelBlocksGroupIDlist_Log = new ArrayList<Integer>();
+   ArrayList<Integer> fuelBlocksGroupIDlist_CoalOre = new ArrayList<Integer>();
    ArrayList<String> playersToAffect = new ArrayList<String>();
    static final int playersToHandleEachTick = 5; // set this dependent on the 'checked block count' for each player, to prevent overloading a tick time frame!
    int handledPlayers = 0;
@@ -27,16 +29,17 @@ public class ArcSchedulerHandler
    static final int neededCraftBlockRows = 2;  // amount of horizontal rows that must consist of crafted blocks to determine whether the player is inside or outside.
    // 2 means, the scan will look for 2 blocks high walls around the player.
 
-   public ArcSchedulerHandler(Arctica plugin)
+   public ArcSchedulerHandler(Arctica plugin, ArcConfigHandler cHandler)
    {
       this.plugin = plugin;
+      this.cHandler = cHandler;
 
       initCraftedBlocksIDlist();
       initWarmBlocksIDlist();
-      initFlammableBlocksGroupIDlist_Wool();
-      initFlammableBlocksGroupIDlist_CraftedWood();
-      initFlammableBlocksGroupIDlist_Log();
-      initFlammableBlocksGroupIDlist_CoalOre();
+      initFuelBlocksGroupIDlist_Wool();
+      initFuelBlocksGroupIDlist_CraftedWood();
+      initFuelBlocksGroupIDlist_Log();
+      initFuelBlocksGroupIDlist_CoalOre();
    }
 
    /* These Blocks will be accepted as suitable for building a safe shelter
@@ -85,33 +88,33 @@ public class ArcSchedulerHandler
       warmBlocksIDlist.add(51);
    }
 
-   /* These Blocks will be accepted as flammable blocks to feed the fire */
-   void initFlammableBlocksGroupIDlist_Wool()
+   /* These Blocks will be accepted as fuel blocks to feed the fire */
+   void initFuelBlocksGroupIDlist_Wool()
    {      
-      flammableBlocksGroupIDlist_Wool.add(35);      
+      fuelBlocksGroupIDlist_Wool.add(35);      
    }
 
-   /* These Blocks will be accepted as flammable blocks to feed the fire */
-   void initFlammableBlocksGroupIDlist_CraftedWood()
+   /* These Blocks will be accepted as fuel blocks to feed the fire */
+   void initFuelBlocksGroupIDlist_CraftedWood()
    {
-      flammableBlocksGroupIDlist_CraftedWood.add(5);    
-      flammableBlocksGroupIDlist_CraftedWood.add(53);
-      flammableBlocksGroupIDlist_CraftedWood.add(85);
-      flammableBlocksGroupIDlist_CraftedWood.add(126);
-      flammableBlocksGroupIDlist_CraftedWood.add(134);
-      flammableBlocksGroupIDlist_CraftedWood.add(136);
+      fuelBlocksGroupIDlist_CraftedWood.add(5);    
+      fuelBlocksGroupIDlist_CraftedWood.add(53);
+      fuelBlocksGroupIDlist_CraftedWood.add(85);
+      fuelBlocksGroupIDlist_CraftedWood.add(126);
+      fuelBlocksGroupIDlist_CraftedWood.add(134);
+      fuelBlocksGroupIDlist_CraftedWood.add(136);
    }
 
-   /* These Blocks will be accepted as flammable blocks to feed the fire */
-   void initFlammableBlocksGroupIDlist_Log()
+   /* These Blocks will be accepted as fuel blocks to feed the fire */
+   void initFuelBlocksGroupIDlist_Log()
    {      
-      flammableBlocksGroupIDlist_Log.add(17);     
+      fuelBlocksGroupIDlist_Log.add(17);     
    }
 
-   /* These Blocks will be accepted as flammable blocks to feed the fire */
-   void initFlammableBlocksGroupIDlist_CoalOre()
+   /* These Blocks will be accepted as fuel blocks to feed the fire */
+   void initFuelBlocksGroupIDlist_CoalOre()
    {
-      flammableBlocksGroupIDlist_CoalOre.add(16);      
+      fuelBlocksGroupIDlist_CoalOre.add(16);      
    }
 
    public void startColdDamageScheduler_SyncRep()
@@ -134,16 +137,7 @@ public class ArcSchedulerHandler
                if((currPlayer.hasPermission("arctica.use")) &&
                      (!currPlayer.hasPermission("arctica.immune")))
                {
-                  //String currPlayersBiomeStr = currPlayer.getWorld().getBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ()).toString();
-                  Biome currPlayersBiome = currPlayer.getWorld().getBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ());
-                  //currPlayer.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Aktuelles Biom: " + currPlayersBiomeStr);   
-
-                  if((currPlayersBiome == Biome.FROZEN_OCEAN) ||
-                        (currPlayersBiome == Biome.FROZEN_RIVER) ||
-                        (currPlayersBiome == Biome.ICE_MOUNTAINS) ||
-                        (currPlayersBiome == Biome.ICE_PLAINS) ||
-                        (currPlayersBiome == Biome.TAIGA) ||
-                        (currPlayersBiome == Biome.TAIGA_HILLS))                               
+                  if(plugin.posIsWithinColdBiome((int)currPlayer.getLocation().getX(), (int)currPlayer.getLocation().getZ()))                              
                   {    
                      playersToAffect.add(currPlayer.getName());
                      playersToAffectCount++;
@@ -182,8 +176,91 @@ public class ArcSchedulerHandler
             // TODO cycle through all fires in fireList.yml and check dieTime. If a fires dieTime is expired, delete the fire block and delete the fire from file
             // TODO use this Scheduler also, to check if the configured percentage of "burnDuration" of the fuel Block has expired, id if so, remove the block
             // to show the player, that this fire is about to die
+
+            Set<String> firesInConfig = cHandler.getFireListFile().getKeys(false);
+            String[] coords;
+            long currTime = plugin.getCurrTimeInMillis();
+            double burnDurationInMillis = 0;
+            double burnDurationLeftInMillis = 0;
+            Block checkedBlock = null;
+            Location loc = null;
+            
+
+            for(String fire : firesInConfig)
+            {
+               coords = fire.split("_");
+
+               // Check if a fuel block above a fire is due to be consumed ***********************************
+
+               if(coords.length == 3) // the "config_version" key gets picked up in the first run. This way, it's ignored.
+               {
+                  // fetch (possible) fire block
+                  checkedBlock = plugin.getServer().getWorld(Arctica.affectedWorld).getBlockAt(
+                        Integer.parseInt(coords[0]),
+                        Integer.parseInt(coords[1]),
+                        Integer.parseInt(coords[2]));
+
+                  loc = checkedBlock.getLocation();
+
+                  if(checkedBlock.getType() == Material.FIRE)
+                  {
+                     loc.setY(loc.getY() + 1); // shift checked position to (possible) fuel block
+                     checkedBlock = loc.getBlock();
+
+                     if(isFuelBlock(checkedBlock.getTypeId())) // neccessary to avoid DIV/0 in next statement!
+                     {
+                        if(cHandler.getFireListFile().getLong(fire + ".dieTime") > currTime) // avoid negative value in next step
+                        {             
+                           burnDurationInMillis = (double)getBurnDurationOfFuelBlock(loc.getBlock().getTypeId()) * 60 * 1000;
+                           burnDurationLeftInMillis = (double)cHandler.getFireListFile().getLong(fire + ".dieTime") - currTime;                                                     
+                           double percentageOfBurnDuration = ((burnDurationInMillis - burnDurationLeftInMillis) / burnDurationInMillis) * 100;
+                           
+                           if(percentageOfBurnDuration >= Arctica.fuelBlockConsumeThreshold)
+                           {                                                    
+                              checkedBlock.setType(Material.AIR);
+
+                              if(Arctica.debug) Arctica.log.info("Fire at " + checkedBlock.getX() + ", " + (checkedBlock.getY() - 1) + ", " + checkedBlock.getZ() + " will die soon.");                           
+                           }
+                        }
+                        else
+                        {
+                           // this case will happen, if the server is not running for a while
+                           checkedBlock.setType(Material.AIR);
+                        }
+                     }
+                  }
+                  else
+                  {
+                     loc.setY(loc.getY() + 1); // shift checked position to (possible) fuel block to maintain logic for next steps
+                  }
+
+                  // Check if a fire is due to die **************************************************************
+                  if(currTime > cHandler.getFireListFile().getLong(fire + ".dieTime"))
+                  {
+                     try
+                     {
+                        loc.setY(loc.getY() - 1); // shift checked position back to (possible) fire block
+                        checkedBlock = loc.getBlock();                      
+                        if(checkedBlock.getType() == Material.FIRE)
+                        {
+                           checkedBlock.setType(Material.AIR); // remove fire
+                           plugin.getServer().getWorld(Arctica.affectedWorld).playSound(checkedBlock.getLocation(), Sound.FIZZ, 10, 1); // volume = 10 good?
+                        }
+                        plugin.removeDiedFireFromFireList(checkedBlock.getX(), checkedBlock.getY(), checkedBlock.getZ());
+
+                        if(Arctica.debug) Arctica.log.info("Fire at " + checkedBlock.getX() + ", " + checkedBlock.getY() + ", " + checkedBlock.getZ() + " removed.");
+                     }
+                     catch(Exception ex)
+                     {
+                        Arctica.log.severe(Arctica.logPrefix + "An error occurred in fireCheckerScheduler.");
+                        Arctica.log.severe(ex.getMessage());
+                     }                  
+                  }
+                  // *****************************************************************************************               
+               }
+            }
          }
-      }, (20*5L), 20*10); // 5 sec delay, 10 sec period
+      }, (20*5L), 20*11); // 5 sec delay, 11 sec period (should not occurr at the same time as the coldDamageScheduler)
    }
 
    void task_applyColdDamage() // this will be run as many ticks as needed to handle all players.
@@ -794,14 +871,14 @@ public class ArcSchedulerHandler
    }
 
    // this does not use Minecrafts "flammable" marker! It checks if the block is a valid fueling material for fire.
-   public boolean isFlammableBlock(int itemID)
+   public boolean isFuelBlock(int itemID)
    {
       boolean res = false;
 
-      if((flammableBlocksGroupIDlist_Wool.contains(itemID)) ||
-            (flammableBlocksGroupIDlist_CraftedWood.contains(itemID)) ||
-            (flammableBlocksGroupIDlist_Log.contains(itemID)) ||
-            (flammableBlocksGroupIDlist_CoalOre.contains(itemID)))
+      if((fuelBlocksGroupIDlist_Wool.contains(itemID)) ||
+            (fuelBlocksGroupIDlist_CraftedWood.contains(itemID)) ||
+            (fuelBlocksGroupIDlist_Log.contains(itemID)) ||
+            (fuelBlocksGroupIDlist_CoalOre.contains(itemID)))
       {
          res = true;
       }
@@ -813,19 +890,19 @@ public class ArcSchedulerHandler
    {
       Arctica.fuelGroups group = Arctica.fuelGroups.NONE;
 
-      if(flammableBlocksGroupIDlist_Wool.contains(blockID))
+      if(fuelBlocksGroupIDlist_Wool.contains(blockID))
       {
          group = Arctica.fuelGroups.WOOL;
       }
-      else if(flammableBlocksGroupIDlist_CraftedWood.contains(blockID))
+      else if(fuelBlocksGroupIDlist_CraftedWood.contains(blockID))
       {
          group = Arctica.fuelGroups.CRAFTED_WOOD;
       }
-      else if(flammableBlocksGroupIDlist_Log.contains(blockID))
+      else if(fuelBlocksGroupIDlist_Log.contains(blockID))
       {
          group = Arctica.fuelGroups.LOG;
       }
-      else if(flammableBlocksGroupIDlist_CoalOre.contains(blockID))
+      else if(fuelBlocksGroupIDlist_CoalOre.contains(blockID))
       {
          group = Arctica.fuelGroups.COAL_ORE;
       }
@@ -835,6 +912,34 @@ public class ArcSchedulerHandler
       }      
 
       return (group);
+   }
+
+   public int getBurnDurationOfFuelBlock(int blockID)
+   {
+      int time = 0;
+
+      if(fuelBlocksGroupIDlist_Wool.contains(blockID))
+      {
+         time = Arctica.burnDuration_Wool;
+      }
+      else if(fuelBlocksGroupIDlist_CraftedWood.contains(blockID))
+      {
+         time = Arctica.burnDuration_CraftedWood;
+      }
+      else if(fuelBlocksGroupIDlist_Log.contains(blockID))
+      {
+         time = Arctica.burnDuration_Log;
+      }
+      else if(fuelBlocksGroupIDlist_CoalOre.contains(blockID))
+      {
+         time = Arctica.burnDuration_CoalOre;
+      }
+      else
+      {
+         // block with this ID is not a valid flammable block, so it has no Group and no burn duration
+      } 
+
+      return (time);
    }
 
    public boolean playerIsAffected(Player player) // returns whether or not a player is currently affected by Arctica

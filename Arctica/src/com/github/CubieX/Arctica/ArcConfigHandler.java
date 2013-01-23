@@ -34,11 +34,11 @@ public class ArcConfigHandler
       fireListCfg = getFireListFile(); // re-reads fireList file from mem or disk
    }
 
-   private void saveConfig() //saves the config to disc (needed when entries have been altered via the plugin in-game)
+   /*private void saveConfig() //saves the config to disc (needed when entries have been altered via the plugin in-game)
    {
       // get and set values here!
       plugin.saveConfig();
-   }
+   }*/
 
    //reloads the config from disc (used if user made manual changes to the config.yml file)
    public void reloadConfig(CommandSender sender)

@@ -3,6 +3,7 @@ package com.github.CubieX.Arctica;
 import java.util.Calendar;
 import java.util.logging.Logger;
 import org.bukkit.Material;
+import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -21,6 +22,7 @@ public class Arctica extends JavaPlugin
    
    static boolean debug = false;
    static boolean safemode = false;
+   static String affectedWorld = "world";
 
    static final int initialBurnDuration = 10; // time in seconds how long a fresh enlit fire will burn, without providing a fuel block above it
    
@@ -42,7 +44,7 @@ public class Arctica extends JavaPlugin
    static int burnDuration_Log = 4;          // time in minutes
    static int burnDuration_CoalOre = 8;      // time in minutes
 
-   static int fuelBlockConsumeThreshold = 80;   // time in percent of burnDuratio of each material when the fuel block on top of
+   static int fuelBlockConsumeThreshold = 80;   // time in percent of burnDuration of each material when the fuel block on top of
    // the fire will be consumed to show players that this fire will die soon
    
    //************************************************
@@ -71,12 +73,13 @@ public class Arctica extends JavaPlugin
 
       comHandler = new ArcCommandHandler(this, cHandler);
       getCommand("arc").setExecutor(comHandler);
-      schedHandler = new ArcSchedulerHandler(this);
+      schedHandler = new ArcSchedulerHandler(this, cHandler);
       eListener = new ArcEntityListener(this);  
 
       readConfigValues();
 
-      schedHandler.startColdDamageScheduler_SyncRep();        
+      schedHandler.startColdDamageScheduler_SyncRep();
+      schedHandler.startFireCheckerScheduler_SyncRep();
 
       log.info(getDescription().getName() + " version " + getDescription().getVersion() + " is enabled!");
    }
@@ -120,6 +123,8 @@ public class Arctica extends JavaPlugin
       debug = this.getConfig().getBoolean("debug");
 
       safemode = this.getConfig().getBoolean("safemode");
+      
+      affectedWorld = this.getConfig().getString("affectedWorld");
 
       damageApplyPeriod = this.getConfig().getInt("damageApplyPeriod");
       if(Arctica.damageApplyPeriod > 60){ damageApplyPeriod = 60; exceed = true; }
@@ -242,16 +247,34 @@ public class Arctica extends JavaPlugin
 
    // this does NOT use Minecrafts "flammable" marker! It checks if the block is a valid fueling material for fire.
    // this is configured in the list in the scheduler handler
-   public boolean isFlammableBlock(int itemID)
+   public boolean isFuelBlock(int itemID)
    {       
-      return (schedHandler.isFlammableBlock(itemID));
+      return (schedHandler.isFuelBlock(itemID));
    }
 
    public boolean playerIsAffected(Player player) // returns whether or not a player is currently affected by Arctica
    {      
       return (schedHandler.playerIsAffected(player));
    }
-
+   
+   public boolean posIsWithinColdBiome(int x, int z)
+   {      
+      Boolean res = false;
+      Biome blocksBiome = this.getServer().getWorld(affectedWorld).getBiome(x, z);
+     
+      if((blocksBiome == Biome.FROZEN_OCEAN) ||
+            (blocksBiome == Biome.FROZEN_RIVER) ||
+            (blocksBiome == Biome.ICE_MOUNTAINS) ||
+            (blocksBiome == Biome.ICE_PLAINS) ||
+            (blocksBiome == Biome.TAIGA) ||
+            (blocksBiome == Biome.TAIGA_HILLS))                               
+      {
+         res = true;
+      }
+      
+      return (res);
+   }
+ 
    // *****************************************************
    // Fire list actions
    // *****************************************************
@@ -269,6 +292,9 @@ public class Arctica extends JavaPlugin
 
       switch(group)
       {
+      case NONE:
+         burnDurationInMS = initialBurnDuration * 1000; // initialBurnDuration is in seconds!
+         break;
       case WOOL:
          burnDurationInMS = burnDuration_Wool * 60 * 1000;
          break;
@@ -312,11 +338,16 @@ public class Arctica extends JavaPlugin
 
    public long getCurrTimeInMillis()
    {
-      return ((Calendar)Calendar.getInstance()).getTimeInMillis();
+      return (((Calendar)Calendar.getInstance()).getTimeInMillis());
    }
    
    public Arctica.fuelGroups getFuelGroup(int blockID)
    {
       return (schedHandler.getFuelGroup(blockID));
+   }
+   
+   public int getBurnDurationOfFuelBlock(int blockID)
+   {
+      return (schedHandler.getBurnDurationOfFuelBlock(blockID));
    }
 }
