@@ -2,6 +2,7 @@ package com.github.CubieX.Arctica;
 
 import java.util.ArrayList;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -165,6 +166,9 @@ public class ArcEntityListener implements Listener
 
          if(Material.FIRE == event.getBlock().getType())
          {
+            Location loc = event.getBlock().getLocation();
+            loc.setY(loc.getY() + 1); // shift selection to (possible) fuel block
+            
             Block blockUnderFire = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
                   getBlockAt((int)event.getBlock().getX(),
                         (int)event.getBlock().getY() - 1,
@@ -172,12 +176,15 @@ public class ArcEntityListener implements Listener
 
             if(blockUnderFire.getType().isFlammable()) // if it's not flammable, it could be ignitable anyway, but will only burn a couple of seconds.
             {
-               int xFire = event.getBlock().getX();
-               int yFire = event.getBlock().getY();
-               int zFire = event.getBlock().getZ();
-
-               plugin.addNewFireToFireList(xFire, yFire, zFire);
-               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Neu entflammtes Feuer bei " + xFire + ", " + yFire + ", " + zFire + " registriert.");}
+               plugin.addNewFireToFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ());
+               if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Neu entflammtes Feuer bei " + event.getBlock().getX() + ", " + event.getBlock().getY() + ", " + event.getBlock().getZ() + " registriert.");}
+                      
+               if(plugin.isFuelBlock(loc.getBlock().getTypeId())) // there is a fuel block already present, so update the fire with new dieTime
+               {
+                  plugin.updateFueledFireOnFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ(), plugin.getFuelGroup(loc.getBlock().getTypeId()));
+                  if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses registrierte Feuer wurde gefuettert und brennt weitere " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(loc.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");}
+               }
+               
                return; // only one of these checks can be successful. So skip the others to keep the time in here short.
             }
          }
