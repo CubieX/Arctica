@@ -1,6 +1,11 @@
 Changelog for Arctica by CubieX
 --------------------------------
-V.1.2.0
+V.1.2.1
+- fixed 45 degree block detection for indoor check
+- added log to allowed crafting block list
+- added some player feedback messages
+
+V.1.2.0-R1
 - implemented rudimentary jail system - unfinished! (depends on Essentials plugin!)
 - added Essentials to dependencies
 - added jail related options to config file

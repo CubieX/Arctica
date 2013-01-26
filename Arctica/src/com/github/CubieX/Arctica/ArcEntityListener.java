@@ -159,7 +159,7 @@ public class ArcEntityListener implements Listener
                   {
                      // Caution: this method needs the coordinates of the fire, but the group of the placed block!
                      plugin.updateFueledFireOnFireList(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ(), plugin.getFuelGroup(event.getBlock().getTypeId()));
-                     if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses registrierte Feuer wurde gefuettert und brennt weitere " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(event.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");}
+                     event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses Feuer brennt nun weitere " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(event.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");
                      return; // only one of these checks can be successful. So skip the others to keep the time in here short.
                   }
                }
@@ -186,7 +186,7 @@ public class ArcEntityListener implements Listener
                if(plugin.isFuelBlock(loc.getBlock().getTypeId())) // there is a fuel block already present, so update the fire with new dieTime
                {
                   plugin.updateFueledFireOnFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ(), plugin.getFuelGroup(loc.getBlock().getTypeId()));
-                  if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses registrierte Feuer wurde gefuettert und brennt weitere " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(loc.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");}
+                  event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses Feuer brennt nun " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(loc.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");
                }
                
                return; // only one of these checks can be successful. So skip the others to keep the time in here short.
@@ -250,7 +250,7 @@ public class ArcEntityListener implements Listener
                   {
                      // Caution: this method needs the coordinates of the fire, but the group of the placed block!
                      plugin.updateFueledFireOnFireList(blockUnderPlacedBlock.getX(), blockUnderPlacedBlock.getY(), blockUnderPlacedBlock.getZ(), Arctica.fuelGroups.NONE);
-                     if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Diesem Feuer wurde das Brennmaterial entzogen. Es wird in kuerze verloeschen!");}
+                     event.getPlayer().sendMessage(ChatColor.AQUA + "Diesem Feuer wurde das Brennmaterial entzogen. Es wird in kuerze erloeschen!");
                   }
                }
             }

@@ -171,8 +171,7 @@ public class Arctica extends JavaPlugin
       if(fuelBlockConsumeThreshold < 50) { fuelBlockConsumeThreshold = 50; exceed = true; }
       
       jailName = this.getConfig().getString("jailName");
-      if(jailName.equals("")) { jailName = "jail"; }
-      log.warning(logPrefix + "jailName in config is undefined! Please check config file.");
+      if(jailName.equals("")) { jailName = "jail"; log.warning(logPrefix + "jailName in config is undefined! Please check config file.");}      
             
       minJailDuration = this.getConfig().getInt("minJailDuration");
       if(minJailDuration > 60) { minJailDuration = 60; exceed = true; }

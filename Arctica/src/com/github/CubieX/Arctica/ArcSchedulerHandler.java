@@ -51,6 +51,7 @@ public class ArcSchedulerHandler
       craftedBlocksIDlist.add(4);
       craftedBlocksIDlist.add(5);
       craftedBlocksIDlist.add(7);
+      craftedBlocksIDlist.add(17);
       craftedBlocksIDlist.add(20);
       craftedBlocksIDlist.add(22);
       craftedBlocksIDlist.add(24);
@@ -492,7 +493,7 @@ public class ArcSchedulerHandler
       else
       {
          playerIsOutside = true;
-         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Craftbloecke: T: " + craftedBlockTOP + " |N: " + craftedBlockNORTH + " |E: " + craftedBlockEAST + " |S: " + craftedBlockSOUTH + " |W: " + craftedBlockWEST);
+         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Craftbloecke: T: " + craftedBlockTOP + " |N: " + craftedBlockNORTH + " |N45: " + craftedBlockNORTHdiagonal + " |E: " + craftedBlockEAST + " |E45: " + craftedBlockEASTdiagonal + " |S: " + craftedBlockSOUTH + " |S45: " + craftedBlockSOUTHdiagonal + " |W: " + craftedBlockWEST + " |W45: " + craftedBlockWESTdiagonal);
          if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Du bist im Freien.");
       }
 
@@ -695,7 +696,11 @@ public class ArcSchedulerHandler
       // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
       Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
-      checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+      
+      // set start of check to the block 45 degrees above players head in checked direction
+      checkedLoc.setY(checkedLoc.getY() + 2);
+      checkedLoc.setZ(checkedLoc.getZ() - 1);
+      
       int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
 
       if(checkLimitY > Arctica.maxMapHeight)
@@ -728,7 +733,11 @@ public class ArcSchedulerHandler
       // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
       Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
-      checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+      
+      // set start of check to the block 45 degrees above players head in checked direction
+      checkedLoc.setY(checkedLoc.getY() + 2);
+      checkedLoc.setX(checkedLoc.getX() + 1);
+      
       int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() + 1)) // go one block up and to the east
@@ -755,7 +764,11 @@ public class ArcSchedulerHandler
       // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
       Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
-      checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+      
+      // set start of check to the block 45 degrees above players head in checked direction
+      checkedLoc.setY(checkedLoc.getY() + 2);
+      checkedLoc.setZ(checkedLoc.getZ() + 1);
+      
       int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() + 1)) // go one block up and SOUTH
@@ -782,7 +795,11 @@ public class ArcSchedulerHandler
       // Check if there is a valid crafted ceiling block in 45 degrees upwards to the player within given distance
 
       Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
-      checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head
+      
+      // set start of check to the block 45 degrees above players head in checked direction
+      checkedLoc.setY(checkedLoc.getY() + 2);
+      checkedLoc.setX(checkedLoc.getX() - 1);
+      
       int checkLimitY = (int)checkedLoc.getY() + Arctica.checkRadius;
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() - 1)) // go one block up and WEST
