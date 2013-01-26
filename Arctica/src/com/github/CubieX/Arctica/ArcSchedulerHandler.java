@@ -400,10 +400,9 @@ public class ArcSchedulerHandler
                                  (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
 
                            // fire custom damage event ================================================                                
-                           ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event                                
+                           ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event
                            plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
-                           //==========================================================================
-                           if((0 < realDamageToApply) && Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "" + realDamageToApply + " Kaelteschaden erhalten.");                                
+                           //==========================================================================                                                           
                            handledPlayersThisTick++; // a player was handled. Increase counter for current tick.
                            handledPlayers++; // a player was handled. Increase counter for playersToAffect list.   
                         }

@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemStack;
@@ -67,7 +68,8 @@ public class ArcEntityListener implements Listener
       {
          if(null != event.getAfflictedPlayer())
          {
-            if(event.getAfflictedPlayer() instanceof Player)
+            if((event.getAfflictedPlayer() instanceof Player) &&
+            (!event.getAfflictedPlayer().isDead()))
             {
                victim = event.getAfflictedPlayer();
 
@@ -83,6 +85,8 @@ public class ArcEntityListener implements Listener
                {            
                   victim.setHealth(0);
                }
+               
+               if((0 < damageToApply) && Arctica.debug) victim.sendMessage(ChatColor.AQUA + "" + damageToApply + " Kaelteschaden erhalten.");
             }            
          }
       }
@@ -220,7 +224,7 @@ public class ArcEntityListener implements Listener
                }
             }
          }
-      }      
+      }
    }
 
    //================================================================================================
@@ -251,6 +255,19 @@ public class ArcEntityListener implements Listener
                }
             }
          }
+      }
+   }
+   
+   //================================================================================================
+   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+   public void onPlayerDeath(PlayerDeathEvent event)
+   {
+      //event.getEntity().getPlayer().sendMessage(ChatColor.AQUA + "Du bist gestorben an: " + "");
+      if(plugin.playerIsAffected(event.getEntity().getPlayer()))
+      {
+         // TODO make maxJailDuration function. Finally there will be more than one jail!
+         // duration will become higher when a player dies more often.
+         plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "tjail " + event.getEntity().getPlayer().getName() + " " + Arctica.jailName + " " + Arctica.minJailDuration + "m");
       }
    }
 

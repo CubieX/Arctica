@@ -33,3 +33,10 @@ burnDuration_Log: 4
 burnDuration_CoalOre: 8
 # fuel block consume threshold in percent of burnDuration (50-100)
 fuelBlockConsumeThreshold: 80
+# jailName (currently only one jail is supported)
+jailName: jail
+# jail duration (Minimum. (0-60 in minutes) Has to be equal or smaller than maxJailDuration)
+minJailDuration: 1
+# jail duration (Maximum. (0-60 in minutes) The used duration depends on the amount of deaths of a player.
+# hast to be equal or greater than minJailDuration
+maxJailDuration: 5

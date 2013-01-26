@@ -1,5 +1,9 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V.1.2.0
+- implemented rudimentary jail system - unfinished! (depends on Essentials plugin!)
+- added Essentials to dependencies
+- added jail related options to config file
 
 V. 1.1.0
 - added fire fueling mechanism

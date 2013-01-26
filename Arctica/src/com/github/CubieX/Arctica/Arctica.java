@@ -47,6 +47,10 @@ public class Arctica extends JavaPlugin
    static int fuelBlockConsumeThreshold = 80;   // time in percent of burnDuration of each material when the fuel block on top of
    // the fire will be consumed to show players that this fire will die soon
    
+   static String jailName = "jail";
+   static int minJailDuration = 1; // time in minutes
+   static int maxJailDuration = 2;
+   
    //************************************************
    static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
    //************************************************
@@ -165,6 +169,19 @@ public class Arctica extends JavaPlugin
       fuelBlockConsumeThreshold = this.getConfig().getInt("fuelBlockConsumeThreshold");
       if(fuelBlockConsumeThreshold > 100) { fuelBlockConsumeThreshold = 100; exceed = true; }
       if(fuelBlockConsumeThreshold < 50) { fuelBlockConsumeThreshold = 50; exceed = true; }
+      
+      jailName = this.getConfig().getString("jailName");
+      if(jailName.equals("")) { jailName = "jail"; }
+      log.warning(logPrefix + "jailName in config is undefined! Please check config file.");
+            
+      minJailDuration = this.getConfig().getInt("minJailDuration");
+      if(minJailDuration > 60) { minJailDuration = 60; exceed = true; }
+      if(minJailDuration < 0) { minJailDuration = 0; exceed = true; }
+      
+      maxJailDuration = this.getConfig().getInt("maxJailDuration");
+      if(maxJailDuration > 60) { maxJailDuration = 60; exceed = true; }
+      if(maxJailDuration < 0) { maxJailDuration = 0; exceed = true; }
+      if(maxJailDuration < minJailDuration) { maxJailDuration = minJailDuration; exceed = true; }
            
       if(exceed)
       {
