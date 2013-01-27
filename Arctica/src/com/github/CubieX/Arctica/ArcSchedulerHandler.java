@@ -84,8 +84,8 @@ public class ArcSchedulerHandler
     * if player is near one of them */    
    void initWarmBlocksIDlist()
    {
-      warmBlocksIDlist.add(10);
-      warmBlocksIDlist.add(11);
+      //warmBlocksIDlist.add(10); // currently deactivated because it's too easy for players to keep their homes warm
+      //warmBlocksIDlist.add(11);
       warmBlocksIDlist.add(51);
    }
 
@@ -559,10 +559,10 @@ public class ArcSchedulerHandler
             //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH checkedLocZ: " + checkedLocZ + " <> checkLimit: " + checkLimit);
             if (!checkedLoc.getBlock().isEmpty())
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH Block gefunden: " + checkedLoc.getBlock().getType().toString());                        
+                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH Block gefunden: " + checkedLoc.getBlock().getType().toString());                        
                   validCraftBlockRows++;
                   break;
                }
@@ -601,10 +601,10 @@ public class ArcSchedulerHandler
          {   
             if (!checkedLoc.getBlock().isEmpty())
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST Block gefunden: " + checkedLoc.getBlock().getType().toString());
                   validCraftBlockRows++;
                   break;
                }
@@ -643,10 +643,10 @@ public class ArcSchedulerHandler
          {   
             if (!checkedLoc.getBlock().isEmpty())
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
                   validCraftBlockRows++;
                   break;
                }
@@ -684,10 +684,10 @@ public class ArcSchedulerHandler
          {
             if (!checkedLoc.getBlock().isEmpty())
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST Block gefunden: " + checkedLoc.getBlock().getType().toString());
                   validCraftBlockRows++;
                   break;
                }
@@ -726,12 +726,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() - 1)) // go one block up and to the north
       {          
-         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }
@@ -758,12 +758,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() + 1)) // go one block up and to the east
       {   
-         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }
@@ -789,12 +789,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() + 1)) // go one block up and SOUTH
       {   
-         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }
@@ -820,12 +820,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() - 1)) // go one block up and WEST
       {   
-         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }

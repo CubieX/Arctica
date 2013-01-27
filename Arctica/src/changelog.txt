@@ -1,5 +1,8 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V.1.2.3
+- deactivated Lava as warm block to keep the difficulty up
+
 V.1.2.2
 - fixed horizontal block detection for indoor check
 
