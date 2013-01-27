@@ -1,4 +1,5 @@
 Known issues:
 -------------
 
-- 
+- Indoor check may fail, if a wall intersects the roof in a non-L-shaped form.
+  Therefore, Walls must be equally high as the roof. 

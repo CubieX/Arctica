@@ -400,6 +400,7 @@ public class ArcSchedulerHandler
                                  (1.0 - torchBonusFactorToApply) *                                            
                                  (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
 
+                           // TODO Mehr Schaden in der Nacht als am Tag drinnen/draussen! Wert per Config einstellbar (ExtraDamageAtNight)
                            // fire custom damage event ================================================                                
                            ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event
                            plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
@@ -493,7 +494,7 @@ public class ArcSchedulerHandler
       else
       {
          playerIsOutside = true;
-         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Craftbloecke: T: " + craftedBlockTOP + " |N: " + craftedBlockNORTH + " |N45: " + craftedBlockNORTHdiagonal + " |E: " + craftedBlockEAST + " |E45: " + craftedBlockEASTdiagonal + " |S: " + craftedBlockSOUTH + " |S45: " + craftedBlockSOUTHdiagonal + " |W: " + craftedBlockWEST + " |W45: " + craftedBlockWESTdiagonal);
+         if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Craftbloecke: T: " + craftedBlockTOP + " |N: " + craftedBlockNORTH + " |N45: " + craftedBlockNORTHdiagonal + " |E: " + craftedBlockEAST + " |E45: " + craftedBlockEASTdiagonal + " |S: " + craftedBlockSOUTH + " |S45: " + craftedBlockSOUTHdiagonal + " |W: " + craftedBlockWEST + " |W45: " + craftedBlockWESTdiagonal);
          if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Du bist im Freien.");
       }
 
@@ -510,7 +511,7 @@ public class ArcSchedulerHandler
 
       // Important for C-Programmers: Objects in JAVA are NOT copied by using '='. It just sets another object reference!
       // Objects can only be copied by instantiating a new object and then copying ALL attributes from the other object
-      Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+      Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ()); // loc of player (foot-level)
 
       int checkLimit = (int)checkedLoc.getY() + Arctica.checkRadius;
       checkedLoc.setY(checkedLoc.getY() + 2); // set height to block above players head        
@@ -544,7 +545,9 @@ public class ArcSchedulerHandler
       // Check if there is a block to the NORTH of the players position which is a valid
       // crafted block for a shelter to gain the "indoor warmth bonus"
 
-      Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+      Location fixedStartLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ()); // loc of player (foot-level)
+      Location checkedLoc = new Location(fixedStartLoc.getWorld(), fixedStartLoc.getX(), fixedStartLoc.getY(), fixedStartLoc.getZ()); // loc of player (foot-level)
+      
       int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
       int checkLimit = (int)checkedLoc.getZ() - Arctica.checkRadius;
       checkedLoc.setZ(checkedLoc.getZ() - 1); // set start next to the player                
@@ -555,15 +558,17 @@ public class ArcSchedulerHandler
          {   
             //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH checkedLocZ: " + checkedLocZ + " <> checkLimit: " + checkLimit);
             if (!checkedLoc.getBlock().isEmpty())
-            {                
+            {
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH Block gefunden: " + checkedLoc.getBlock().getType().toString());                        
+                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH Block gefunden: " + checkedLoc.getBlock().getType().toString());                        
                   validCraftBlockRows++;
                   break;
                }
             }
          }
+         checkedLoc.setZ(fixedStartLoc.getZ() - 1); // reset horizontal location to initial location (= next to players feet) after checking foot level to prepare for head level check
       }
 
       if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
@@ -583,7 +588,9 @@ public class ArcSchedulerHandler
       // Check if there is a block to the EAST of the players position which is a valid
       // crafted block for a shelter to gain the "indoor warmth bonus"
 
-      Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+      Location fixedStartLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ()); // loc of player (foot-level)
+      Location checkedLoc = new Location(fixedStartLoc.getWorld(), fixedStartLoc.getX(), fixedStartLoc.getY(), fixedStartLoc.getZ()); // loc of player (foot-level)
+      
       int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
       int checkLimit = (int)checkedLoc.getX() + Arctica.checkRadius;
       checkedLoc.setX(checkedLoc.getX() + 1); // set start next to the player                
@@ -594,14 +601,16 @@ public class ArcSchedulerHandler
          {   
             if (!checkedLoc.getBlock().isEmpty())
             {
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST Block gefunden: " + checkedLoc.getBlock().getType().toString());
                   validCraftBlockRows++;
                   break;
                }
             }
          }
+         checkedLoc.setX(fixedStartLoc.getX() + 1); // reset horizontal location to initial location (= next to players feet) after checking foot level to prepare for head level check
       }
 
       if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
@@ -621,7 +630,9 @@ public class ArcSchedulerHandler
       // Check if there is a block to the SOUTH of the players position which is a valid
       // crafted block for a shelter to gain the "indoor warmth bonus"
 
-      Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+      Location fixedStartLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ()); // loc of player (foot-level)
+      Location checkedLoc = new Location(fixedStartLoc.getWorld(), fixedStartLoc.getX(), fixedStartLoc.getY(), fixedStartLoc.getZ()); // loc of player (foot-level)
+      
       int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
       int checkLimit = (int)checkedLoc.getZ() + Arctica.checkRadius;        
       checkedLoc.setZ(checkedLoc.getZ() + 1); // set start next to the player       
@@ -632,14 +643,16 @@ public class ArcSchedulerHandler
          {   
             if (!checkedLoc.getBlock().isEmpty())
             {
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH Block gefunden: " + checkedLoc.getBlock().getType().toString());
                   validCraftBlockRows++;
                   break;
                }
             }
-         }            
+         }
+         checkedLoc.setZ(fixedStartLoc.getZ() + 1); // reset horizontal location to initial location (= next to players feet) after checking foot level to prepare for head level check
       }
 
       if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
@@ -659,25 +672,28 @@ public class ArcSchedulerHandler
       // Check if there is a block to the WEST of the players position which is a valid
       // crafted block for a shelter to gain the "indoor warmth bonus"
 
-      Location checkedLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ());
+      Location fixedStartLoc = new Location(startLocation.getWorld(), startLocation.getX(), startLocation.getY(), startLocation.getZ()); // loc of player (foot-level)
+      Location checkedLoc = new Location(fixedStartLoc.getWorld(), fixedStartLoc.getX(), fixedStartLoc.getY(), fixedStartLoc.getZ()); // loc of player (foot-level)
       int checkLimitY = (int)checkedLoc.getY() + 1; // check should be done for foot and head level of player
-      int checkLimit = (int)checkedLoc.getX() - Arctica.checkRadius;        
+      int checkLimit = (int)checkedLoc.getX() - Arctica.checkRadius;
       checkedLoc.setX(checkedLoc.getX() - 1); // set start next to the player        
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY()+1))
       {
          for(int checkedLocX = (int)checkedLoc.getX(); checkedLocX > checkLimit; checkedLocX--, checkedLoc.setX(checkedLoc.getX() - 1)) //safer than "while"
-         {   
+         {
             if (!checkedLoc.getBlock().isEmpty())
             {
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
                if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
                {
-                  //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST Block gefunden: " + checkedLoc.getBlock().getType().toString());
+                  if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST Block gefunden: " + checkedLoc.getBlock().getType().toString());
                   validCraftBlockRows++;
                   break;
                }
-            }
+            }                        
          }
+         checkedLoc.setX(fixedStartLoc.getX() - 1); // reset horizontal location to initial location (= next to players feet) after checking foot level to prepare for head level check
       }
 
       if(validCraftBlockRows >= neededCraftBlockRows) // all height levels have valid craft blocks
@@ -710,12 +726,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() - 1)) // go one block up and to the north
       {          
-         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "NORTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }
@@ -742,12 +758,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() + 1)) // go one block up and to the east
       {   
-         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "EAST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }
@@ -773,12 +789,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setZ(checkedLoc.getZ() + 1)) // go one block up and SOUTH
       {   
-         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "SOUTH_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }
@@ -804,12 +820,12 @@ public class ArcSchedulerHandler
 
       for(int checkedLocY = (int)checkedLoc.getY(); checkedLocY <= checkLimitY; checkedLocY++, checkedLoc.setY(checkedLoc.getY() + 1), checkedLoc.setX(checkedLoc.getX() - 1)) // go one block up and WEST
       {   
-         //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
+         if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "Gecheckt: " + checkedLoc.getBlock().getX() +  " " + checkedLoc.getBlock().getY() + " " + checkedLoc.getBlock().getZ());
          if (!checkedLoc.getBlock().isEmpty())
          {
             if(craftedBlocksIDlist.contains(checkedLoc.getBlock().getTypeId())) // its a valid crafted block
             {
-               //if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
+               if(Arctica.debug) plugin.getServer().broadcastMessage(ChatColor.AQUA + "WEST_TOP45 Block gefunden: " + checkedLoc.getBlock().getType().toString());
                res = true;
                break;
             }

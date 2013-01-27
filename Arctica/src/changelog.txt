@@ -1,5 +1,8 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V.1.2.2
+- fixed horizontal block detection for indoor check
+
 V.1.2.1
 - fixed 45 degree block detection for indoor check
 - added log to allowed crafting block list
