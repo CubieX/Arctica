@@ -18,7 +18,7 @@ public class Arctica extends JavaPlugin
    public static final Logger log = Logger.getLogger("Minecraft");
    static final String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
    
-   public static enum fuelGroups{NONE, WOOL, CRAFTED_WOOD, LOG, COAL_ORE};
+   public enum fuelGroups {NONE, WOOL, CRAFTED_WOOD, LOG, COAL_ORE};
    
    static boolean debug = false;
    static boolean safemode = false;
@@ -26,18 +26,21 @@ public class Arctica extends JavaPlugin
 
    static final int initialBurnDuration = 10; // time in seconds how long a fresh enlit fire will burn, without providing a fuel block above it
    
-   static int damageApplyPeriod = 10; // seconds to apply the cold damage (cyclic)
-   static double baseDamageInAir = 0.0;
+   static int damageApplyPeriod = 10;                 // seconds to apply the cold damage (cyclic)
+   static double baseDamageInAir = 0.0;               // all damage values are absolute values in health points (Player has max. 20 health)
    static double extraDamageInAirWhenOutside = 0.0;
    static double baseDamageInWater = 0.0;    
    static double extraDamageInWaterWhenOutside = 0.0;
-   static final double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70%.
+   
+   static final double warmthBonusFactor = 0.7; // a factor of 0.7 means, damage taken from cold will be reduced by 70% when near fire.
    static final double torchBonusFactor = 0.25; // bonus when holding a torch. Reduces cold damage by 25%.
-
+   
    static final int checkRadius = 20;     // how far should the plugin check for crafted blocks? (used for "Player is outside" check)     
    static final int maxMapHeight = 255;   // TOP check will fail above this height
-   static final int horizontalWarmBlockSearchRadius = 5;
-   static final int verticalWarmBlockSearchRadius = 3;
+   static final int horizontalFireSearchRadius = 5;
+   static final int verticalFireSearchRadius = 3;
+   static final int horizontalFurnaceSearchRadius = 2;
+   static final int verticalFurnaceSearchRadius = 1;
 
    static int burnDuration_Wool = 1;         // time in minutes
    static int burnDuration_CraftedWood = 2;  // time in minutes
@@ -149,7 +152,7 @@ public class Arctica extends JavaPlugin
       extraDamageInWaterWhenOutside = (double)this.getConfig().getInt("extraDamageInWaterWhenOutside");
       if(extraDamageInWaterWhenOutside > 20) { extraDamageInWaterWhenOutside = 20; exceed = true; }
       if(extraDamageInWaterWhenOutside < 0) { extraDamageInWaterWhenOutside = 0; exceed = true; }
-     
+           
       burnDuration_Wool = this.getConfig().getInt("burnDuration_Wool");
       if(burnDuration_Wool > 3600) { burnDuration_Wool = 3600; exceed = true; }
       if(burnDuration_Wool < 1) { burnDuration_Wool = 1; exceed = true; }
@@ -206,7 +209,7 @@ public class Arctica extends JavaPlugin
    }
 
    // *****************************************************
-   // Player dependent methods
+   // Player and world dependent methods
    // *****************************************************
 
    // Calculates the factor for damage reduction from players worn armor. Max. 0.8 = 80% DamRed
@@ -289,8 +292,8 @@ public class Arctica extends JavaPlugin
       }
       
       return (res);
-   }
- 
+   }   
+    
    // *****************************************************
    // Fire list actions
    // *****************************************************

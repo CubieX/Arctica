@@ -69,7 +69,7 @@ public class ArcEntityListener implements Listener
          if(null != event.getAfflictedPlayer())
          {
             if((event.getAfflictedPlayer() instanceof Player) &&
-            (!event.getAfflictedPlayer().isDead()))
+                  (!event.getAfflictedPlayer().isDead()))
             {
                victim = event.getAfflictedPlayer();
 
@@ -85,7 +85,7 @@ public class ArcEntityListener implements Listener
                {            
                   victim.setHealth(0);
                }
-               
+
                if((0 < damageToApply) && Arctica.debug) victim.sendMessage(ChatColor.AQUA + "" + damageToApply + " Kaelteschaden erhalten.");
             }            
          }
@@ -172,7 +172,7 @@ public class ArcEntityListener implements Listener
          {
             Location loc = event.getBlock().getLocation();
             loc.setY(loc.getY() + 1); // shift selection to (possible) fuel block
-            
+
             Block blockUnderFire = plugin.getServer().getWorld(event.getPlayer().getWorld().getName()).
                   getBlockAt((int)event.getBlock().getX(),
                         (int)event.getBlock().getY() - 1,
@@ -182,13 +182,13 @@ public class ArcEntityListener implements Listener
             {
                plugin.addNewFireToFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ());
                if(Arctica.debug){event.getPlayer().sendMessage(ChatColor.AQUA + "Neu entflammtes Feuer bei " + event.getBlock().getX() + ", " + event.getBlock().getY() + ", " + event.getBlock().getZ() + " registriert.");}
-                      
+
                if(plugin.isFuelBlock(loc.getBlock().getTypeId())) // there is a fuel block already present, so update the fire with new dieTime
                {
                   plugin.updateFueledFireOnFireList(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ(), plugin.getFuelGroup(loc.getBlock().getTypeId()));
                   event.getPlayer().sendMessage(ChatColor.AQUA + "Dieses Feuer brennt nun " + ChatColor.GREEN + plugin.getBurnDurationOfFuelBlock(loc.getBlock().getTypeId()) + ChatColor.AQUA + " Minuten.");
                }
-               
+
                return; // only one of these checks can be successful. So skip the others to keep the time in here short.
             }
          }
@@ -257,7 +257,7 @@ public class ArcEntityListener implements Listener
          }
       }
    }
-   
+
    //================================================================================================
    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
    public void onPlayerDeath(PlayerDeathEvent event)

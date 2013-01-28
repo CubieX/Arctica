@@ -2,7 +2,7 @@ name: Arctica
 main: com.github.CubieX.Arctica.Arctica
 depend: [Essentials]
 softdepend: [PermissionsEx, zPermissions, bPermissions, PermissionsBukkit]
-version: 1.2.3
+version: 1.3.0
 authors: [CubieX]
 description: Adventure game to survive in arctic cold
 
@@ -21,3 +21,6 @@ permissions:
     arctica.admin:
         description: Allows reloading the plugin and all other commands.
         default: op
+    arctica.debug:
+        description: A player with this permission will see some debug info
+        default: false
