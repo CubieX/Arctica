@@ -1,5 +1,9 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V1.3.1
+- added additional debug message for applied damage for players with arctica.debug permission
+- players with arctica.debug permission will NOT suffer cold damage. But it will be calculated and send as debug message.
+
 V.1.3.0
 - added arctica.debug permission to show a player some debug info
 - added furnace to warmth source check

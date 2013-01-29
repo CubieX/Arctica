@@ -73,21 +73,30 @@ public class ArcEntityListener implements Listener
             {
                victim = event.getAfflictedPlayer();
 
-               if((victim.getHealth() - damageToApply) >= 1)
+               if(!victim.hasPermission("arctica.debug"))
                {
-                  victim.setHealth(victim.getHealth() - damageToApply);
-               }
-               else if(Arctica.safemode)
-               {
-                  victim.setHealth(1);
-               }
-               else
-               {            
-                  victim.setHealth(0);
-               }
+                  if((victim.getHealth() - damageToApply) >= 1)
+                  {
+                     victim.setHealth(victim.getHealth() - damageToApply);
+                  }
+                  else if(Arctica.safemode)
+                  {
+                     victim.setHealth(1);
+                  }
+                  else
+                  {            
+                     victim.setHealth(0);
+                  }   
+               } // if player has debug permission, don't apply the calculated damage, but send debug message
 
-               if((0 < damageToApply) && Arctica.debug) victim.sendMessage(ChatColor.AQUA + "" + damageToApply + " Kaelteschaden erhalten.");
-            }            
+               if(0 < damageToApply)
+               {
+                  if(Arctica.debug || victim.hasPermission("arctica.debug"))
+                  {
+                     victim.sendMessage(ChatColor.AQUA + "" + damageToApply + " Kaelteschaden erhalten.");
+                  }
+               }
+            }
          }
       }
       catch(Exception ex)
