@@ -1,5 +1,9 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V1.3.2
+- changed cold damage calculation. Now players inside a shelter & not in water & near fire will never suffer cold damage.
+  Calculation will be omitted in this case and result set to 0, regardless of other environmental states.
+
 V1.3.1
 - added additional debug message for applied damage for players with arctica.debug permission
 - players with arctica.debug permission will NOT suffer cold damage. But it will be calculated and send as debug message.

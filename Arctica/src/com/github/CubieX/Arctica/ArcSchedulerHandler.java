@@ -16,11 +16,11 @@ public class ArcSchedulerHandler
    private Arctica plugin = null;
    private ArcConfigHandler cHandler = null;
    ArrayList<Integer> craftedBlocksIDlist = new ArrayList<Integer>();
-   
+
    /* These Blocks will be accepted as warm blocks that grant a warmth bonus
     * if player is near one of them */
    enum warmBlocksIDlist {FIRE, BURNING_FURNACE};
-   
+
    ArrayList<Integer> fuelBlocksGroupIDlist_Wool = new ArrayList<Integer>();
    ArrayList<Integer> fuelBlocksGroupIDlist_CraftedWood = new ArrayList<Integer>();
    ArrayList<Integer> fuelBlocksGroupIDlist_Log = new ArrayList<Integer>();
@@ -301,42 +301,49 @@ public class ArcSchedulerHandler
                               currPlayerIsNearFire = checkIfNearWarmthSource(currPlayer);
                               currPlayerIsInWater = checkIfInWater(currPlayer);
 
-                              if(!currPlayerIsInWater)
+                              if((!currPlayerIsOutside) && (currPlayerIsNearFire) && (!currPlayerIsInWater))
                               {
-                                 currPlayerIsHoldingTorch = plugin.playerIsHoldingTorch(currPlayer.getName());
+                                 realDamageToApply = 0; // if inside, near fire, not in water, then omit calculations. Player should not get damaged.
                               }
-
-                              // now set damage values according to players situation =================================
-
-                              if (currPlayerIsInWater)
+                              else
                               {
-                                 if(currPlayerIsOutside)
-                                 { // player is outside and in water
-                                    if(currPlayerIsNearFire)
-                                    {
-                                       if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in kaltem Wasser.");
-                                       baseDamageInWaterToApply = Arctica.baseDamageInWater;
-                                       extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
-                                       warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+
+                                 if(!currPlayerIsInWater)
+                                 {
+                                    currPlayerIsHoldingTorch = plugin.playerIsHoldingTorch(currPlayer.getName());
+                                 }
+
+                                 // now set damage values according to players situation =================================
+
+                                 if (currPlayerIsInWater)
+                                 {
+                                    if(currPlayerIsOutside)
+                                    { // player is outside and in water
+                                       if(currPlayerIsNearFire)
+                                       {
+                                          if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in kaltem Wasser.");
+                                          baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                          extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                          warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+                                       }
+                                       else
+                                       { // player is outside and in ice water
+                                          if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in Eiswasser!");
+                                          baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                          extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                       }
                                     }
-                                    else
-                                    { // player is outside and in ice water
-                                       if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in Eiswasser!");
-                                       baseDamageInWaterToApply = Arctica.baseDamageInWater;
-                                       extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                    else                                    
+                                    { // player is inside and in water.
+                                       if(!currPlayerIsNearFire)
+                                       {
+                                          baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                       }
                                     }
                                  }
-                                 else                                    
-                                 { // player is inside and in water.
-                                    if(!currPlayerIsNearFire)
-                                    {
-                                       baseDamageInWaterToApply = Arctica.baseDamageInWater;
-                                    }
-                                 }
-                              }
-                              else // player is in air
-                              {
-                                 /*
+                                 else // player is in air
+                                 {
+                                    /*
                                                      [syntax = java]
                                                         EntityPig piggy= new EntityPig (mcWorld);
 
@@ -344,60 +351,61 @@ public class ArcSchedulerHandler
                                                     [/syntax]
 
                                                     Where mcWorld is the craftbukkit world.getHandle().
-                                  * */
+                                     * */
 
-                                 /*Entity chick = null;
+                                    /*Entity chick = null;
                                                     CraftPlayer craftPlayer = (CraftPlayer)currPlayer;
                                                     CraftWorld craftWorld = (CraftWorld)craftPlayer.getWorld();
                                                     net.minecraft.server.World mworld = (net.minecraft.server.World)(craftWorld.getHandle());
                                                     chick = new Entity(mworld);*/
 
-                                 if(currPlayerIsHoldingTorch)
-                                 {
-                                    torchBonusFactorToApply = Arctica.torchBonusFactor;
-                                 }
-
-                                 if(currPlayerIsNearFire)
-                                 {
-                                    warmthBonusFactorToApply = Arctica.warmthBonusFactor;
-
-                                    if(currPlayerIsOutside)
+                                    if(currPlayerIsHoldingTorch)
                                     {
+                                       torchBonusFactorToApply = Arctica.torchBonusFactor;
+                                    }
+
+                                    if(currPlayerIsNearFire)
+                                    {
+                                       warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+
+                                       if(currPlayerIsOutside)
+                                       {
+                                          baseDamageInAirToApply = Arctica.baseDamageInAir;
+                                          extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;                                       
+                                       }
+                                       else
+                                       { // player is inside near a fire. No Damage.                                                
+                                          // No Damage.
+                                       }
+                                    }
+                                    else
+                                    { // player is in air, but not near fire
                                        baseDamageInAirToApply = Arctica.baseDamageInAir;
-                                       extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;                                       
-                                    }
-                                    else
-                                    { // player is inside near a fire. No Damage.                                                
-                                       // No Damage.
-                                    }
-                                 }
-                                 else
-                                 { // player is in air, but not near fire
-                                    baseDamageInAirToApply = Arctica.baseDamageInAir;
 
-                                    if(currPlayerIsOutside)
-                                    { // player is outside in air, not near fire                                                
-                                       extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;
+                                       if(currPlayerIsOutside)
+                                       { // player is outside in air, not near fire                                                
+                                          extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;
+                                       }
+                                       else
+                                       { // player is inside, in air, not near fire.                                                
+                                          // no extra damage. Only base damage for beeing in air.
+                                       }
                                     }
-                                    else
-                                    { // player is inside, in air, not near fire.                                                
-                                       // no extra damage. Only base damage for beeing in air.
-                                    }
-                                 }
 
-                                 //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
+                                    //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
+                                 }                             
+
+                                 // Combined calculation. Some values will be 0, depending on above evaluation
+                                 realDamageToApply = (int)Math.ceil(((
+                                       baseDamageInAirToApply +
+                                       extraDamageInAirWhenOutsideToApply +
+                                       baseDamageInWaterToApply +
+                                       extraDamageInWaterWhenOutsideToApply) *
+                                       (1.0 - warmthBonusFactorToApply) *
+                                       (1.0 - torchBonusFactorToApply) *                                            
+                                       (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
                               }
-
-                              // Combined calculation. Some values will be 0, depending on above evaluation
-                              realDamageToApply = (int)Math.ceil(((
-                                    baseDamageInAirToApply +
-                                    extraDamageInAirWhenOutsideToApply +
-                                    baseDamageInWaterToApply +
-                                    extraDamageInWaterWhenOutsideToApply) *
-                                    (1.0 - warmthBonusFactorToApply) *
-                                    (1.0 - torchBonusFactorToApply) *                                            
-                                    (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
-
+                              
                               // fire custom damage event ================================================                                
                               ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event
                               plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
@@ -884,7 +892,7 @@ public class ArcSchedulerHandler
          int z2 = fire_z2;
 
          playerIsNearWarmthSource = warmthSourceFoundInArea(world, x1, x2, y1, y2, z1, z2, furnace_x1, furnace_x2, furnace_y1, furnace_y2, furnace_z1, furnace_z2);
-         
+
          if(playerIsNearWarmthSource)
          {
             if(Arctica.debug || player.hasPermission("arctica.debug"))
@@ -912,7 +920,7 @@ public class ArcSchedulerHandler
                   success = true;
                   break;
                }
-               
+
                // if blocks within the (smaller) furnace cube are checked, look also for a burning furnace
                if(checkedBlockIsWithinFurnaceCheckCube(checkedX, checkedY, checkedZ, furnace_x1, furnace_x2, furnace_y1, furnace_y2, furnace_z1, furnace_z2))
                {
@@ -930,18 +938,18 @@ public class ArcSchedulerHandler
 
       return(success);
    }
-   
+
    boolean checkedBlockIsWithinFurnaceCheckCube(int checkedX, int checkedY, int checkedZ, int furnace_x1, int furnace_x2, int furnace_y1, int furnace_y2, int furnace_z1, int furnace_z2)
    {
       boolean res = false;
-      
+
       if((checkedX >= furnace_x1) && (checkedX <= furnace_x2) &&
             (checkedY >= furnace_y1) && (checkedY <= furnace_y2) &&
             (checkedZ >= furnace_z1) && (checkedZ <= furnace_z2))
       {
          res = true;
       }  
-      
+
       return (res);
    }
 
