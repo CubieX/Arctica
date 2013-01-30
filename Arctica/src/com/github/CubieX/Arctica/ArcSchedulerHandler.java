@@ -301,7 +301,7 @@ public class ArcSchedulerHandler
                               currPlayerIsNearFire = checkIfNearWarmthSource(currPlayer);
                               currPlayerIsInWater = checkIfInWater(currPlayer);
 
-                              if((!currPlayerIsOutside) && (currPlayerIsNearFire) && (!currPlayerIsInWater))
+                              if((!currPlayerIsOutside) && (currPlayerIsNearFire))
                               {
                                  realDamageToApply = 0; // if inside, near fire, not in water, then omit calculations. Player should not get damaged.
                               }
