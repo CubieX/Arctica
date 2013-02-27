@@ -1,5 +1,15 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V1.4.0
+- players with a Gamemode other than "Survival" will be excluded from the damage application
+- config now has an option to decide, whether or not a player that dies from cold damage should
+  loose his inventory entirely (= no items will be dropped to be picked up later)
+- jail function can be deactivated by setting "minJailDuration" to "0" in config
+
+V1.3.3
+- removed condition for not suffering damage: now it's triggered when
+inside near fire, regardless if in water or not.
+
 V1.3.2
 - changed cold damage calculation. Now players inside a shelter & not in water & near fire will never suffer cold damage.
   Calculation will be omitted in this case and result set to 0, regardless of other environmental states.

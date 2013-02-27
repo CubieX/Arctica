@@ -84,7 +84,13 @@ public class ArcEntityListener implements Listener
                      victim.setHealth(1);
                   }
                   else
-                  {            
+                  {
+                     // player will die, so if configured, delete his inventory before his items get dropped when he dies
+                     if(plugin.getConfig().getBoolean("clearInventoryOnDeath"))
+                     {
+                        // TODO keep some specified items??
+                        victim.getInventory().clear();
+                     }
                      victim.setHealth(0);
                   }   
                } // if player has debug permission, don't apply the calculated damage, but send debug message
@@ -271,12 +277,14 @@ public class ArcEntityListener implements Listener
    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
    public void onPlayerDeath(PlayerDeathEvent event)
    {
-      //event.getEntity().getPlayer().sendMessage(ChatColor.AQUA + "Du bist gestorben an: " + "");
-      if(plugin.playerIsAffected(event.getEntity().getPlayer()))
+      if(plugin.playerIsAffected(event.getEntity().getPlayer())) // TODO this will trigger, regardless of the death cause. Should be checking if player died from coldDamage!
       {
          // TODO make maxJailDuration function. Finally there will be more than one jail!
          // duration will become higher when a player dies more often.
-         plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "tjail " + event.getEntity().getPlayer().getName() + " " + Arctica.jailName + " " + Arctica.minJailDuration + "m");
+         if(Arctica.minJailDuration > 0)
+         {
+            plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "tjail " + event.getEntity().getPlayer().getName() + " " + Arctica.jailName + " " + Arctica.minJailDuration + "m");
+         }
       }
    }
 

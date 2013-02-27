@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -300,14 +301,16 @@ public class ArcSchedulerHandler
                               currPlayerIsOutside = checkIfOutside(currPlayer);                              
                               currPlayerIsNearFire = checkIfNearWarmthSource(currPlayer);
                               currPlayerIsInWater = checkIfInWater(currPlayer);
-
-                              if((!currPlayerIsOutside) && (currPlayerIsNearFire))
+                              
+                              if(((!currPlayerIsOutside) && (currPlayerIsNearFire)) ||
+                                    (GameMode.SURVIVAL != currPlayer.getGameMode()))
                               {
-                                 realDamageToApply = 0; // if inside, near fire, not in water, then omit calculations. Player should not get damaged.
+                                 // if inside, near fire, not in water, then omit calculations. Player should not get damaged.
+                                 // if in Gamemode other than "Survival", omit calculations. Player should not get damaged.
+                                 realDamageToApply = 0; 
                               }
                               else
                               {
-
                                  if(!currPlayerIsInWater)
                                  {
                                     currPlayerIsHoldingTorch = plugin.playerIsHoldingTorch(currPlayer.getName());

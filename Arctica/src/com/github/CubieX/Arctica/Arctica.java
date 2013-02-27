@@ -54,6 +54,8 @@ public class Arctica extends JavaPlugin
    static int minJailDuration = 1; // time in minutes
    static int maxJailDuration = 2;
    
+   static boolean clearInventoryOnDeath = true; // if set to TRUE, a player that dies from cold damage will loose his inventory and nothing will be dropped 
+   
    //************************************************
    static String usedConfigVersion = "1"; // Update this every time the config file version changes, so the plugin knows, if there is a suiting config present
    //************************************************
@@ -185,6 +187,8 @@ public class Arctica extends JavaPlugin
       if(maxJailDuration < 0) { maxJailDuration = 0; exceed = true; }
       if(maxJailDuration < minJailDuration) { maxJailDuration = minJailDuration; exceed = true; }
            
+      clearInventoryOnDeath = this.getConfig().getBoolean("clearInventoryOnDeath");
+      
       if(exceed)
       {
          log.warning(logPrefix + "A config value is out of it's allowed range! Please check config file.");

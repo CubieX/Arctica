@@ -15,7 +15,7 @@ public class ColdDamageEvent extends Event
     {
         ColdDamageEvent.victim = victim;
         ColdDamageEvent.damageToApply = damageToApply;
-    }    
+    }
     
     public int getDamageToApply()
     {
