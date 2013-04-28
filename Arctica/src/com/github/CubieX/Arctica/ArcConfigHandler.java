@@ -29,9 +29,9 @@ public class ArcConfigHandler
       plugin.getConfig(); //re-reads config out of memory. (Reads the config from file only, when invoked the first time!)
 
       // fire list
-      reloadfireListFile(); // load file from disk and create objects      
+      reloadfireListFile(); // load file from disk and create objects
       saveFireListDefaultFile(); // creates a copy of the provided direList.yml
-      fireListCfg = getFireListFile(); // re-reads fireList file from mem or disk
+      reloadfireListFile(); // load file again after it is physically present now
    }
 
    /*private void saveConfig() //saves the config to disc (needed when entries have been altered via the plugin in-game)
@@ -92,13 +92,13 @@ public class ArcConfigHandler
       {
          return;
       }
-      try 
+      try
       {
          getFireListFile().save(fireListFile);
       }
       catch (IOException ex)
       {
-         Arctica.log.severe("Could not save data to " + fireListFile);
+         Arctica.log.severe("Could not save data to " + fireListFile.getName());
          Arctica.log.severe(ex.getMessage());
       }
    }

@@ -1,5 +1,8 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V1.4.1
+- BugFix: fireList.yml now gets properly read on first load
+
 V1.4.0
 - players with a Gamemode other than "Survival" will be excluded from the damage application
 - config now has an option to decide, whether or not a player that dies from cold damage should
