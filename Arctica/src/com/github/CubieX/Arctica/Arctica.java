@@ -2,8 +2,12 @@ package com.github.CubieX.Arctica;
 
 import java.util.Calendar;
 import java.util.logging.Logger;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -85,7 +89,10 @@ public class Arctica extends JavaPlugin
       schedHandler = new ArcSchedulerHandler(this, cHandler);
       eListener = new ArcEntityListener(this);  
 
-      readConfigValues();
+      if(!readConfigValues())
+      {
+         return; // critical config error. Plugin disabled. Cancel execution.
+      }
 
       schedHandler.startColdDamageScheduler_SyncRep();
       schedHandler.startFireCheckerScheduler_SyncRep();
@@ -125,15 +132,18 @@ public class Arctica extends JavaPlugin
       return (res);
    }
 
-   public void readConfigValues()
+   public boolean readConfigValues()
    {
       boolean exceed = false;
+      boolean invalid = false;
+      boolean abort = false;
 
       debug = this.getConfig().getBoolean("debug");
 
       safemode = this.getConfig().getBoolean("safemode");
       
       affectedWorld = this.getConfig().getString("affectedWorld");
+      if(null == Bukkit.getServer().getWorld(affectedWorld)){invalid = true; abort = true;}
 
       damageApplyPeriod = this.getConfig().getInt("damageApplyPeriod");
       if(Arctica.damageApplyPeriod > 60){ damageApplyPeriod = 60; exceed = true; }
@@ -193,10 +203,24 @@ public class Arctica extends JavaPlugin
       {
          log.warning(logPrefix + "A config value is out of it's allowed range! Please check config file.");
       }
+      
+      if(invalid)
+      {
+         log.warning(logPrefix + "One or more config values are invalid. Please check your config file!");         
+      }
+      
+      if(abort) // critical config error. Plugin will not work. So disable it.
+      {
+         disablePlugin();
+         return false;
+      }
+      
+      return true; // everything went fine
    }   
 
    void disablePlugin()
    {
+      log.severe(logPrefix + "ERROR on loading Plugin. Plugin will be disabled now...");
       getServer().getPluginManager().disablePlugin(this);        
    }
 
@@ -216,50 +240,68 @@ public class Arctica extends JavaPlugin
    // Player and world dependent methods
    // *****************************************************
 
-   // Calculates the factor for damage reduction from players worn armor. Max. 0.8 = 80% DamRed
-   public double getDamageReduceFactorFromCloth(Player player)
+   // Calculates the factor for damage reduction from players or horses worn armor or natural resistance. Max. 0.8 = 80% DamRed
+   public double getDamageReduceFactorFromCloth(LivingEntity entity)
    {
-      org.bukkit.inventory.PlayerInventory inv = player.getInventory();
-      ItemStack boots = inv.getBoots();
-      ItemStack helmet = inv.getHelmet();
-      ItemStack chest = inv.getChestplate();
-      ItemStack pants = inv.getLeggings();
       double red = 0.0;
+      
+      if(entity instanceof Player)
+      {
+         Player player = (Player)entity;
+         org.bukkit.inventory.PlayerInventory inv = player.getInventory();
+         ItemStack boots = inv.getBoots();
+         ItemStack helmet = inv.getHelmet();
+         ItemStack chest = inv.getChestplate();
+         ItemStack pants = inv.getLeggings();         
 
-      if(null != helmet)
-      {
-         if(helmet.getType() == Material.LEATHER_HELMET)red = red + 0.04;
-         else if(helmet.getType() == Material.GOLD_HELMET)red = red + 0.08;
-         else if(helmet.getType() == Material.CHAINMAIL_HELMET)red = red + 0.08;
-         else if(helmet.getType() == Material.IRON_HELMET)red = red + 0.08;
-         else if(helmet.getType() == Material.DIAMOND_HELMET)red = red + 0.12;
-      }       
+         if(null != helmet)
+         {
+            if(helmet.getType() == Material.LEATHER_HELMET)red = red + 0.04;
+            else if(helmet.getType() == Material.GOLD_HELMET)red = red + 0.08;
+            else if(helmet.getType() == Material.CHAINMAIL_HELMET)red = red + 0.08;
+            else if(helmet.getType() == Material.IRON_HELMET)red = red + 0.08;
+            else if(helmet.getType() == Material.DIAMOND_HELMET)red = red + 0.12;
+         }       
 
-      if(null != boots)
-      {
-         if(boots.getType() == Material.LEATHER_BOOTS)red = red + 0.04;
-         else if(boots.getType() == Material.GOLD_BOOTS)red = red + 0.04;
-         else if(boots.getType() == Material.CHAINMAIL_BOOTS)red = red + 0.04;
-         else if(boots.getType() == Material.IRON_BOOTS)red = red + 0.08;
-         else if(boots.getType() == Material.DIAMOND_BOOTS)red = red + 0.12;
-      }
+         if(null != boots)
+         {
+            if(boots.getType() == Material.LEATHER_BOOTS)red = red + 0.04;
+            else if(boots.getType() == Material.GOLD_BOOTS)red = red + 0.04;
+            else if(boots.getType() == Material.CHAINMAIL_BOOTS)red = red + 0.04;
+            else if(boots.getType() == Material.IRON_BOOTS)red = red + 0.08;
+            else if(boots.getType() == Material.DIAMOND_BOOTS)red = red + 0.12;
+         }
 
-      if(null != pants)
-      {
-         if(pants.getType() == Material.LEATHER_LEGGINGS)red = red + 0.08;
-         else if(pants.getType() == Material.GOLD_LEGGINGS)red = red + 0.12;
-         else if(pants.getType() == Material.CHAINMAIL_LEGGINGS)red = red + 0.16;
-         else if(pants.getType() == Material.IRON_LEGGINGS)red = red + 0.20;
-         else if(pants.getType() == Material.DIAMOND_LEGGINGS)red = red + 0.24;
+         if(null != pants)
+         {
+            if(pants.getType() == Material.LEATHER_LEGGINGS)red = red + 0.08;
+            else if(pants.getType() == Material.GOLD_LEGGINGS)red = red + 0.12;
+            else if(pants.getType() == Material.CHAINMAIL_LEGGINGS)red = red + 0.16;
+            else if(pants.getType() == Material.IRON_LEGGINGS)red = red + 0.20;
+            else if(pants.getType() == Material.DIAMOND_LEGGINGS)red = red + 0.24;
+         }
+         if(null != chest)
+         {
+            if(chest.getType() == Material.LEATHER_CHESTPLATE)red = red + 0.12;
+            else if(chest.getType() == Material.GOLD_CHESTPLATE)red = red + 0.20;
+            else if(chest.getType() == Material.CHAINMAIL_CHESTPLATE)red = red + 0.20;
+            else if(chest.getType() == Material.IRON_CHESTPLATE)red = red + 0.24;
+            else if(chest.getType() == Material.DIAMOND_CHESTPLATE)red = red + 0.32;
+         }
       }
-      if(null != chest)
+      
+      if(entity.getType() == EntityType.HORSE)
       {
-         if(chest.getType() == Material.LEATHER_CHESTPLATE)red = red + 0.12;
-         else if(chest.getType() == Material.GOLD_CHESTPLATE)red = red + 0.20;
-         else if(chest.getType() == Material.CHAINMAIL_CHESTPLATE)red = red + 0.20;
-         else if(chest.getType() == Material.IRON_CHESTPLATE)red = red + 0.24;
-         else if(chest.getType() == Material.DIAMOND_CHESTPLATE)red = red + 0.32;
+         /*Horse mount = (Horse)entity;*/
+         //TODO check if mount is a "normal" horse
+         //TODO check if horse has armor equipped and calculate damage reduction
+         
+         //TODO check if mount is a donkey or mule and if so, set a predefined damage reduction
+         // (maybe donkeys and mules are more resistant to cold?)
+         
+         red = 0.3;
       }
+      
       return red;
    }
 

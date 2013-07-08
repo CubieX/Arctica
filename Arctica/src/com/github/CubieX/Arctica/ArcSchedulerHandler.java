@@ -1,8 +1,10 @@
 package com.github.CubieX.Arctica;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
-
+import java.util.UUID;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -10,7 +12,11 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Horse;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 public class ArcSchedulerHandler
 {
@@ -27,12 +33,20 @@ public class ArcSchedulerHandler
    ArrayList<Integer> fuelBlocksGroupIDlist_Log = new ArrayList<Integer>();
    ArrayList<Integer> fuelBlocksGroupIDlist_CoalOre = new ArrayList<Integer>();
    ArrayList<String> playersToAffect = new ArrayList<String>();
+   ArrayList<UUID> mountsToAffect = new ArrayList<UUID>();
    static final int playersToHandleEachTick = 5; // set this dependent on the 'checked block count' for each player, to prevent overloading a tick time frame!
+   static final int mountsToHandleEachTick = 5; // set this dependent on the 'checked block count' for each mount, to prevent overloading a tick time frame!
    int handledPlayers = 0;
-   int cdSchedTaskID = 0; 
+   int handledMounts = 0;
    int playersToAffectCount = 0;
+   int mountsToAffectCount = 0;
+   Horse[] mountsList;
    static final int neededCraftBlockRows = 2;  // amount of horizontal rows that must consist of crafted blocks to determine whether the player is inside or outside.
    // 2 means, the scan will look for 2 blocks high walls around the player.
+   BukkitTask applyColdDamageToPlayersTimerTask = null;
+   BukkitTask applyColdDamageToMountsTimerTask = null;
+   boolean applyColdDamageToPlayersTimerTaskScheduled = false;
+   boolean applyColdDamageToMountsTimerTaskScheduled = false;
 
    public ArcSchedulerHandler(Arctica plugin, ArcConfigHandler cHandler)
    {
@@ -121,9 +135,14 @@ public class ArcSchedulerHandler
          @Override
          public void run()
          {
+            if(Arctica.debug){Arctica.log.info("Total handled players with ColdDamage in last scan: " + handledPlayers);}
+            if(Arctica.debug){Arctica.log.info("Total handled mounts with ColdDamage in last scan: " + handledMounts);}
+
+            // PLAYER HANDLER ==================================================================
             Player[] onlinePlayerList = plugin.getServer().getOnlinePlayers();
             playersToAffect.clear();
             playersToAffectCount = 0;
+            handledPlayers = 0;
 
             //check for all players if they are in cold biome
             for(int i = 0; i < onlinePlayerList.length; i++)
@@ -143,19 +162,422 @@ public class ArcSchedulerHandler
 
             if(!playersToAffect.isEmpty())
             {
-               // calculate how many ticks will be needed to handle all players that should be affected
-               int amountOfTicksNeededToHandleAllAffectedPlayers = (int)(Math.ceil((double)playersToAffectCount / (double)playersToHandleEachTick));
-               handledPlayers = 0;
-
-               for(int i = 0; i < amountOfTicksNeededToHandleAllAffectedPlayers; i++)
+               if(null == applyColdDamageToPlayersTimerTask)
                {
-                  task_applyColdDamage(); // handles the given amount of players each tick. Must be called multiple times until all
-                  // players have been handled
+                  start_applyColdDamageToPlayersTimer(); // handles the given amount of players each tick.
+                  applyColdDamageToPlayersTimerTaskScheduled = true;
+                  if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "applyColdDamageToPlayersTimer created");}                     
+               }
+               else
+               {
+                  if(!applyColdDamageToPlayersTimerTaskScheduled)
+                  {
+                     start_applyColdDamageToPlayersTimer(); // handles the given amount of players each tick.
+                     applyColdDamageToPlayersTimerTaskScheduled = true;
+                     if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "applyColdDamageToPlayersTimer scheduled.");}
+                  }
+               }
+            }
+            else
+            { // no players to handle in this scan cycle. So cancel the ColdDamage task for now, if running.
+               if((null != applyColdDamageToPlayersTimerTask) && (applyColdDamageToPlayersTimerTaskScheduled))
+               {
+                  Bukkit.getScheduler().cancelTask(applyColdDamageToPlayersTimerTask.getTaskId());
+                  applyColdDamageToPlayersTimerTaskScheduled = false;
+                  if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "applyColdDamageToPlayersTimer canceled.");}
+               }
+            }
+
+            // MOUNT HANDLER (Horse, Donkey, Mule) ===========================================            
+            Collection<Entity> horseCol = Bukkit.getServer().getWorld(Arctica.affectedWorld).getEntitiesByClasses(Horse.class); // currently not functional (build 2807)
+            mountsList = horseCol.toArray(new Horse[horseCol.size()]);
+            mountsToAffect.clear();
+            mountsToAffectCount = 0;
+            handledMounts = 0;
+
+            //check for all mounts if they are in cold biome
+            for(int i = 0; i < mountsList.length; i++)
+            {
+               Horse currMount = mountsList[i];
+
+               if(true /* if mount is tamed -> see attributes when implemented! */)
+               {
+                  if(plugin.posIsWithinColdBiome((int)currMount.getLocation().getX(), (int)currMount.getLocation().getZ()))                              
+                  {    
+                     mountsToAffect.add(currMount.getUniqueId());
+                     mountsToAffectCount++;
+                  }
+               }
+            }
+
+            if(!mountsToAffect.isEmpty())
+            {
+               if(null == applyColdDamageToMountsTimerTask)
+               {
+                  start_applyColdDamageToMountsTimer(); // handles the given amount of mounts each tick.
+                  applyColdDamageToMountsTimerTaskScheduled = true;
+                  if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "applyColdDamageToMountsTimer created");}                     
+               }
+               else
+               {
+                  if(!applyColdDamageToMountsTimerTaskScheduled)
+                  {
+                     start_applyColdDamageToMountsTimer(); // handles the given amount of mounts each tick.
+                     applyColdDamageToMountsTimerTaskScheduled = true;
+                     if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "applyColdDamageToMountsTimer scheduled.");}
+                  }
+               }
+            }
+            else
+            { // no mounts to handle in this scan cycle. So cancel the ColdDamage task for now, if running.
+               if((null != applyColdDamageToMountsTimerTask) && (applyColdDamageToMountsTimerTaskScheduled))
+               {
+                  Bukkit.getScheduler().cancelTask(applyColdDamageToMountsTimerTask.getTaskId());
+                  applyColdDamageToMountsTimerTaskScheduled = false;
+                  if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "applyColdDamageToMountsTimer canceled.");}
                }
             }
          }
       }, (20*5L), 20*Arctica.damageApplyPeriod); // 5 sec delay, configurable period in seconds
-   }
+   }   
+
+   void start_applyColdDamageToPlayersTimer() // this will be run as many ticks as needed to handle all players.
+   {
+      // this is a synchronous repeating task.
+      applyColdDamageToPlayersTimerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable()
+      {
+         @Override
+         public void run() //current scan duration: approx. 2 ms/Player (limited to 5x this time per tick!)
+         {
+            if(handledPlayers < playersToAffectCount) // are not all players handled for this scan period?
+            {
+               Player currPlayer = null;
+               boolean currPlayerIsOutside = false;
+               boolean currPlayerIsNearFire = false;
+               boolean currPlayerIsInWater = false;
+               boolean currPlayerIsHoldingTorch = false;
+               int realDamageToApply = 0;
+               int handledPlayersThisTick = 0;
+
+               double baseDamageInWaterToApply = 0.0;
+               double extraDamageInWaterWhenOutsideToApply = 0.0;
+               double warmthBonusFactorToApply = 0.0;
+               double torchBonusFactorToApply = 0.0;
+               double baseDamageInAirToApply = 0.0;
+               double extraDamageInAirWhenOutsideToApply = 0.0;
+
+               for (int currPlayerIndex = handledPlayers; currPlayerIndex < playersToAffect.size(); currPlayerIndex++) // go through ArrayList
+               {
+                  /*if(null != playersToAffect.get(currPlayerIndex)) // ArrayList may contain NULL values! So assure it's a real player.
+                  {*/
+                  if((handledPlayersThisTick < playersToAffectCount) &&
+                        (handledPlayersThisTick < playersToHandleEachTick))
+                  {                        
+                     currPlayer = plugin.getServer().getPlayerExact(playersToAffect.get(currPlayerIndex));
+
+                     if(null != currPlayer)
+                     {
+                        // perform environmental checks on current player ======================================
+                        currPlayerIsOutside = checkIfOutside(currPlayer);                              
+                        currPlayerIsNearFire = checkIfNearWarmthSource(currPlayer);
+                        currPlayerIsInWater = checkIfInWater(currPlayer);
+
+                        if(((!currPlayerIsOutside) && (currPlayerIsNearFire)) ||
+                              (GameMode.SURVIVAL != currPlayer.getGameMode()))
+                        {
+                           // if inside, near fire, not in water, then omit calculations. Player should not get damaged.
+                           // if in Gamemode other than "Survival", omit calculations. Player should not get damaged.
+                           realDamageToApply = 0; 
+                        }
+                        else
+                        {
+                           if(!currPlayerIsInWater)
+                           {
+                              currPlayerIsHoldingTorch = plugin.playerIsHoldingTorch(currPlayer.getName());
+                           }
+
+                           // now set damage values according to players situation =================================
+
+                           if (currPlayerIsInWater)
+                           {
+                              if(currPlayerIsOutside)
+                              { // player is outside and in water
+                                 if(currPlayerIsNearFire)
+                                 {
+                                    if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in kaltem Wasser.");
+                                    baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                    extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                    warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+                                 }
+                                 else
+                                 { // player is outside and in ice water
+                                    if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in Eiswasser!");
+                                    baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                    extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                 }
+                              }
+                              else                                    
+                              { // player is inside and in water.
+                                 if(!currPlayerIsNearFire)
+                                 {
+                                    baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                 }
+                              }
+                           }
+                           else // player is in air
+                           {
+                              /*
+                                                     [syntax = java]
+                                                        EntityPig piggy= new EntityPig (mcWorld);
+
+                                                    mcWorld.addEntity(piggy, SpawnReason.CUSTOM);
+                                                    [/syntax]
+
+                                                    Where mcWorld is the craftbukkit world.getHandle().
+                               * */
+
+                              /*Entity chick = null;
+                                                    CraftPlayer craftPlayer = (CraftPlayer)currPlayer;
+                                                    CraftWorld craftWorld = (CraftWorld)craftPlayer.getWorld();
+                                                    net.minecraft.server.World mworld = (net.minecraft.server.World)(craftWorld.getHandle());
+                                                    chick = new Entity(mworld);*/
+
+                              if(currPlayerIsHoldingTorch)
+                              {
+                                 torchBonusFactorToApply = Arctica.torchBonusFactor;
+                              }
+
+                              if(currPlayerIsNearFire)
+                              {
+                                 warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+
+                                 if(currPlayerIsOutside)
+                                 {
+                                    baseDamageInAirToApply = Arctica.baseDamageInAir;
+                                    extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;                                       
+                                 }
+                                 else
+                                 { // player is inside near a fire. No Damage.                                                
+                                    // No Damage.
+                                 }
+                              }
+                              else
+                              { // player is in air, but not near fire
+                                 baseDamageInAirToApply = Arctica.baseDamageInAir;
+
+                                 if(currPlayerIsOutside)
+                                 { // player is outside in air, not near fire                                                
+                                    extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;
+                                 }
+                                 else
+                                 { // player is inside, in air, not near fire.                                                
+                                    // no extra damage. Only base damage for beeing in air.
+                                 }
+                              }
+
+                              //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
+                           }                             
+
+                           // Combined calculation. Some values will be 0, depending on above evaluation
+                           realDamageToApply = (int)Math.ceil(((
+                                 baseDamageInAirToApply +
+                                 extraDamageInAirWhenOutsideToApply +
+                                 baseDamageInWaterToApply +
+                                 extraDamageInWaterWhenOutsideToApply) *
+                                 (1.0 - warmthBonusFactorToApply) *
+                                 (1.0 - torchBonusFactorToApply) *                                            
+                                 (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                        }
+
+                        // fire custom damage event ================================================                                
+                        ColdDamageEvent cdPlayerEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event
+                        plugin.getServer().getPluginManager().callEvent(cdPlayerEvent); // fire Event         
+                        //==========================================================================                                                           
+                        handledPlayersThisTick++; // a player was handled. Increase counter for current tick.
+                        handledPlayers++; // a player was handled. Increase counter for playersToAffect list.   }
+                     } // end if NULL currPlayer check
+                     else
+                     {
+                        // player is probably no longer online
+
+                     } // end if/else NULL currPlayer check
+                  } // end if Handled players count check 
+                  else
+                  {
+                     // limit of players for this tick is reached. Leave loop.
+                     break;
+                  }  // end if Handled players count check 
+                  /*}*/ // end NULL check of current ArrayList entry
+               } // end if FOR loop
+
+               if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "Handled players with ColdDamage this tick: " + handledPlayersThisTick);}
+
+            } // end if handledPlayers < playersToAffectCount           
+         } // end RUN()
+      }, 1L, 1L); // end scheduler call. 1 tick delay, 1 tick period.
+   } // end method
+
+   void start_applyColdDamageToMountsTimer() // this will be run as many ticks as needed to handle all mounts.
+   {
+      // this is a synchronous repeating task.
+      applyColdDamageToMountsTimerTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable()
+      {
+         @Override
+         public void run() //current scan duration: approx. 2 ms/Mount (limited to 5x this time per tick!)
+         {
+            if(handledMounts < mountsToAffectCount) // are not all mounts handled for this scan period?
+            {
+               Horse currMount = null;
+               boolean currMountIsOutside = false;
+               boolean currMountIsNearFire = false;
+               boolean currMountIsInWater = false;
+
+               int realDamageToApply = 0;
+               int handledMountsThisTick = 0;
+
+               double baseDamageInWaterToApply = 0.0;
+               double extraDamageInWaterWhenOutsideToApply = 0.0;
+               double warmthBonusFactorToApply = 0.0;
+               double baseDamageInAirToApply = 0.0;
+               double extraDamageInAirWhenOutsideToApply = 0.0;
+
+               for (int currMountIndex = handledMounts; currMountIndex < mountsToAffect.size(); currMountIndex++) // go through ArrayList
+               {
+                  /*if(null != mountsToAffect.get(currPlayerIndex)) // ArrayList may contain NULL values! So assure it's a real player.
+                  {*/
+                  if((handledMountsThisTick < mountsToAffectCount) &&
+                        (handledMountsThisTick < mountsToHandleEachTick))
+                  {                        
+                     currMount = mountsList[currMountIndex];
+
+                     if(null != currMount)
+                     {
+                        // perform environmental checks on current player ======================================
+                        currMountIsOutside = checkIfOutside(currMount);                              
+                        currMountIsNearFire = checkIfNearWarmthSource(currMount);
+                        currMountIsInWater = checkIfInWater(currMount);
+
+                        if(!currMountIsOutside &&
+                              currMountIsNearFire &&
+                              !currMountIsInWater)
+                        {
+                           // if inside, near fire, not in water, then omit calculations. Mount should not get damaged.                              
+                           realDamageToApply = 0;
+                        }
+                        else
+                        {
+                           // now set damage values according to mounts situation =================================
+
+                           if (currMountIsInWater)
+                           {
+                              if(currMountIsOutside)
+                              { // mount is outside and in water
+                                 if(currMountIsNearFire)
+                                 {                                       
+                                    baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                    extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                    warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+                                 }
+                                 else
+                                 { // mount is outside and in ice water                                      
+                                    baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                    extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
+                                 }
+                              }
+                              else                                    
+                              { // mount is inside and in water.
+                                 if(!currMountIsNearFire)
+                                 {
+                                    baseDamageInWaterToApply = Arctica.baseDamageInWater;
+                                 }
+                              }
+                           }
+                           else // player is in air
+                           {
+                              /*
+                                                     [syntax = java]
+                                                        EntityPig piggy= new EntityPig (mcWorld);
+
+                                                    mcWorld.addEntity(piggy, SpawnReason.CUSTOM);
+                                                    [/syntax]
+
+                                                    Where mcWorld is the craftbukkit world.getHandle().
+                               * */
+
+                              /*Entity chick = null;
+                                                    CraftPlayer craftPlayer = (CraftPlayer)currPlayer;
+                                                    CraftWorld craftWorld = (CraftWorld)craftPlayer.getWorld();
+                                                    net.minecraft.server.World mworld = (net.minecraft.server.World)(craftWorld.getHandle());
+                                                    chick = new Entity(mworld);*/
+
+                              if(currMountIsNearFire)
+                              {
+                                 warmthBonusFactorToApply = Arctica.warmthBonusFactor;
+
+                                 if(currMountIsOutside)
+                                 {
+                                    baseDamageInAirToApply = Arctica.baseDamageInAir;
+                                    extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;                                       
+                                 }
+                                 else
+                                 { // mount is inside near a fire. No Damage.                                                
+                                    // No Damage.
+                                 }
+                              }
+                              else
+                              { // mount is in air, but not near fire
+                                 baseDamageInAirToApply = Arctica.baseDamageInAir;
+
+                                 if(currMountIsOutside)
+                                 { // mount is outside in air, not near fire                                                
+                                    extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;
+                                 }
+                                 else
+                                 { // mount is inside, in air, not near fire.                                                
+                                    // no extra damage. Only base damage for beeing in air.
+                                 }
+                              }
+
+                              //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
+                           }                             
+
+                           // Combined calculation. Some values will be 0, depending on above evaluation
+                           realDamageToApply = (int)Math.ceil(((
+                                 baseDamageInAirToApply +
+                                 extraDamageInAirWhenOutsideToApply +
+                                 baseDamageInWaterToApply +
+                                 extraDamageInWaterWhenOutsideToApply) *
+                                 (1.0 - warmthBonusFactorToApply) *                                    
+                                 (1.0 - plugin.getDamageReduceFactorFromCloth(currMount))));
+                        }
+
+                        // fire custom damage event ================================================                                
+                        ColdDamageEvent cdMountEvent = new ColdDamageEvent(currMount, realDamageToApply); // Create the event
+                        plugin.getServer().getPluginManager().callEvent(cdMountEvent); // fire Event         
+                        //==========================================================================                                                           
+                        handledMountsThisTick++; // a mount was handled. Increase counter for current tick.
+                        handledMounts++; // a mount was handled. Increase counter for mountsToAffect list.   }
+                     } // end if NULL currMount check
+                     else
+                     {
+                        // mount is probably no longer online
+
+                     } // end if/else NULL currMount check
+                  } // end if handled mounts count check 
+                  else
+                  {
+                     // limit of mounts for this tick is reached. Leave loop.
+                     break;
+                  }  // end if Handled mounts count check 
+                  /*}*/ // end NULL check of current ArrayList entry
+               } // end if FOR loop
+
+               if(Arctica.debug){Arctica.log.info(Arctica.logPrefix + "Handled mounts with ColdDamage this tick: " + handledMountsThisTick);}
+
+            } // end if handledMounts < mountsToAffectCount           
+         } // end RUN()
+      }, 1L, 1L); // end scheduler call. 1 tick delay, 1 tick period.
+   } // end method
 
    public void startFireCheckerScheduler_SyncRep()
    {
@@ -165,12 +587,12 @@ public class ArcSchedulerHandler
          @Override
          public void run()
          {
-            // TODO When checking all registered fire places, also check if there is still fire present. If not, remove the fire place from data file.
+            // When checking all registered fire places, also check if there is still fire present. If not, remove the fire place from data file.
             // if check is only done for fire in range of a player, then use a seperate scheduler to check and cleanup the file cyclic
             // while checking for fire blocks at registered positions.
             // TODO performance test with big fire list!
-            // TODO cycle through all fires in fireList.yml and check dieTime. If a fires dieTime is expired, delete the fire block and delete the fire from file
-            // TODO use this Scheduler also, to check if the configured percentage of "burnDuration" of the fuel Block has expired, id if so, remove the block
+            // cycle through all fires in fireList.yml and check dieTime. If a fires dieTime is expired, delete the fire block and delete the fire from file
+            // use this Scheduler also, to check if the configured percentage of "burnDuration" of the fuel Block has expired, id if so, remove the block
             // to show the player, that this fire is about to die
 
             Set<String> firesInConfig = cHandler.getFireListFile().getKeys(false);
@@ -259,259 +681,89 @@ public class ArcSchedulerHandler
       }, (20*5L), 20*11); // 5 sec delay, 11 sec period (should not occurr at the same time as the coldDamageScheduler)
    }
 
-   void task_applyColdDamage() // this will be run as many ticks as needed to handle all players.
-   {   
-      // this is a synchronous single task. It will be run once on the next tick.
-      plugin.getServer().getScheduler().runTask(plugin, new Runnable()
-      {
-         @Override
-         public void run() //current scan duration: approx. 2 ms/Player (limited to 5x this time per tick!)
-         {
-            Player currPlayer = null;
-            boolean currPlayerIsOutside = false;
-            boolean currPlayerIsNearFire = false;
-            boolean currPlayerIsInWater = false;
-            boolean currPlayerIsHoldingTorch = false;
-            int realDamageToApply = 0;
-            int handledPlayersThisTick = 0;
-
-            double baseDamageInWaterToApply = 0.0;
-            double extraDamageInWaterWhenOutsideToApply = 0.0;
-            double warmthBonusFactorToApply = 0.0;
-            double torchBonusFactorToApply = 0.0;
-            double baseDamageInAirToApply = 0.0;
-            double extraDamageInAirWhenOutsideToApply = 0.0;
-
-            try
-            {
-               if(handledPlayers < playersToAffectCount)
-               {
-                  for (int currPlayerIndex = handledPlayers; currPlayerIndex < playersToAffect.size(); currPlayerIndex++) // go through Hashmap
-                  {
-                     if(null != playersToAffect.get(currPlayerIndex)) // Hashmap may contain NULL values! So assure it's a real player.
-                     {
-                        if((handledPlayersThisTick < playersToAffectCount) &&
-                              (handledPlayersThisTick < playersToHandleEachTick))
-                        {
-                           currPlayer = plugin.getServer().getPlayerExact(playersToAffect.get(currPlayerIndex));
-
-                           if(null != currPlayer)
-                           {
-                              // perform environmental checks on current player ======================================
-                              currPlayerIsOutside = checkIfOutside(currPlayer);                              
-                              currPlayerIsNearFire = checkIfNearWarmthSource(currPlayer);
-                              currPlayerIsInWater = checkIfInWater(currPlayer);
-                              
-                              if(((!currPlayerIsOutside) && (currPlayerIsNearFire)) ||
-                                    (GameMode.SURVIVAL != currPlayer.getGameMode()))
-                              {
-                                 // if inside, near fire, not in water, then omit calculations. Player should not get damaged.
-                                 // if in Gamemode other than "Survival", omit calculations. Player should not get damaged.
-                                 realDamageToApply = 0; 
-                              }
-                              else
-                              {
-                                 if(!currPlayerIsInWater)
-                                 {
-                                    currPlayerIsHoldingTorch = plugin.playerIsHoldingTorch(currPlayer.getName());
-                                 }
-
-                                 // now set damage values according to players situation =================================
-
-                                 if (currPlayerIsInWater)
-                                 {
-                                    if(currPlayerIsOutside)
-                                    { // player is outside and in water
-                                       if(currPlayerIsNearFire)
-                                       {
-                                          if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in kaltem Wasser.");
-                                          baseDamageInWaterToApply = Arctica.baseDamageInWater;
-                                          extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
-                                          warmthBonusFactorToApply = Arctica.warmthBonusFactor;
-                                       }
-                                       else
-                                       { // player is outside and in ice water
-                                          if(Arctica.debug) currPlayer.sendMessage(ChatColor.AQUA + "Du bist in Eiswasser!");
-                                          baseDamageInWaterToApply = Arctica.baseDamageInWater;
-                                          extraDamageInWaterWhenOutsideToApply = Arctica.extraDamageInWaterWhenOutside;
-                                       }
-                                    }
-                                    else                                    
-                                    { // player is inside and in water.
-                                       if(!currPlayerIsNearFire)
-                                       {
-                                          baseDamageInWaterToApply = Arctica.baseDamageInWater;
-                                       }
-                                    }
-                                 }
-                                 else // player is in air
-                                 {
-                                    /*
-                                                     [syntax = java]
-                                                        EntityPig piggy= new EntityPig (mcWorld);
-
-                                                    mcWorld.addEntity(piggy, SpawnReason.CUSTOM);
-                                                    [/syntax]
-
-                                                    Where mcWorld is the craftbukkit world.getHandle().
-                                     * */
-
-                                    /*Entity chick = null;
-                                                    CraftPlayer craftPlayer = (CraftPlayer)currPlayer;
-                                                    CraftWorld craftWorld = (CraftWorld)craftPlayer.getWorld();
-                                                    net.minecraft.server.World mworld = (net.minecraft.server.World)(craftWorld.getHandle());
-                                                    chick = new Entity(mworld);*/
-
-                                    if(currPlayerIsHoldingTorch)
-                                    {
-                                       torchBonusFactorToApply = Arctica.torchBonusFactor;
-                                    }
-
-                                    if(currPlayerIsNearFire)
-                                    {
-                                       warmthBonusFactorToApply = Arctica.warmthBonusFactor;
-
-                                       if(currPlayerIsOutside)
-                                       {
-                                          baseDamageInAirToApply = Arctica.baseDamageInAir;
-                                          extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;                                       
-                                       }
-                                       else
-                                       { // player is inside near a fire. No Damage.                                                
-                                          // No Damage.
-                                       }
-                                    }
-                                    else
-                                    { // player is in air, but not near fire
-                                       baseDamageInAirToApply = Arctica.baseDamageInAir;
-
-                                       if(currPlayerIsOutside)
-                                       { // player is outside in air, not near fire                                                
-                                          extraDamageInAirWhenOutsideToApply = Arctica.extraDamageInAirWhenOutside;
-                                       }
-                                       else
-                                       { // player is inside, in air, not near fire.                                                
-                                          // no extra damage. Only base damage for beeing in air.
-                                       }
-                                    }
-
-                                    //currPlayer.damage(realDamageToApply, (org.bukkit.entity.Entity) chick);
-                                 }                             
-
-                                 // Combined calculation. Some values will be 0, depending on above evaluation
-                                 realDamageToApply = (int)Math.ceil(((
-                                       baseDamageInAirToApply +
-                                       extraDamageInAirWhenOutsideToApply +
-                                       baseDamageInWaterToApply +
-                                       extraDamageInWaterWhenOutsideToApply) *
-                                       (1.0 - warmthBonusFactorToApply) *
-                                       (1.0 - torchBonusFactorToApply) *                                            
-                                       (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
-                              }
-                              
-                              // fire custom damage event ================================================                                
-                              ColdDamageEvent cdEvent = new ColdDamageEvent(currPlayer, realDamageToApply); // Create the event
-                              plugin.getServer().getPluginManager().callEvent(cdEvent); // fire Event         
-                              //==========================================================================                                                           
-                              handledPlayersThisTick++; // a player was handled. Increase counter for current tick.
-                              handledPlayers++; // a player was handled. Increase counter for playersToAffect list.   }
-                           } // end if NULL currPlayer check
-                           else
-                           {
-                              // player is probably no longer online
-
-                           } // end if/else NULL currPlayer check
-                        } // end if Handled players count check 
-                        else
-                        {
-                           // limit of players for this tick is reached. Leave loop.
-                           break;
-                        }  // end if Handled players count check 
-                     } // end NULL check of current hashmap entry
-                  } // end if FOR loop
-               } // end if handledPlayers < playersToAffectCount
-            } // end TRY
-            catch(Exception ex)
-            {
-               Arctica.log.info(Arctica.logPrefix + ex.getMessage());
-               // player probably no longer online or no longer meeting the necessary requirements for beeing affected
-            } // end TRY/CATCH
-         } // end RUN()
-      }); // end scheduler call
-   } // end method
-
-   public void setTaskID(int id)
+   boolean checkIfOutside(LivingEntity entity)
    {
-      this.cdSchedTaskID = id;
-   }
+      boolean entityIsOutside = true;
 
-   boolean checkIfOutside(Player player)
-   { 
-      boolean playerIsOutside = true;
-      boolean craftedBlockTOP = false;
-      boolean craftedBlockNORTHdiagonal = false;
-      boolean craftedBlockEASTdiagonal = false;
-      boolean craftedBlockSOUTHdiagonal = false;
-      boolean craftedBlockWESTdiagonal = false;
-      boolean craftedBlockNORTH = false;
-      boolean craftedBlockEAST = false;
-      boolean craftedBlockSOUTH = false;
-      boolean craftedBlockWEST = false;
+      if(null != entity)
+      {         
+         boolean craftedBlockTOP = false;
+         boolean craftedBlockNORTHdiagonal = false;
+         boolean craftedBlockEASTdiagonal = false;
+         boolean craftedBlockSOUTHdiagonal = false;
+         boolean craftedBlockWESTdiagonal = false;
+         boolean craftedBlockNORTH = false;
+         boolean craftedBlockEAST = false;
+         boolean craftedBlockSOUTH = false;
+         boolean craftedBlockWEST = false;
 
-      Location playerLoc = player.getLocation();
+         Location entityLoc = entity.getLocation();
+         Player player = null;
 
-      // Check TOP ========================================================
-      // Check if a Block straight to the TOP of the player is a crafted block
-      craftedBlockTOP = TOPhasCraftedBlock(playerLoc);
+         if(entity instanceof Player)
+         {
+            player = (Player) entity;
+         }
 
-      // Check NORTH 45 degrees ================================================================
-      // Check if a Block to the NORTH in 45 degrees to the top of the player is a crafted block
-      craftedBlockNORTHdiagonal = NORTHdiagnoalHasCraftedBlock(playerLoc);
-      // Check EAST 45 degrees ================================================================
-      // Check if a Block to the EAST in 45 degrees to the top of the player is a crafted block
-      craftedBlockEASTdiagonal = EASTdiagnoalHasCraftedBlock(playerLoc);
-      // Check SOUTH 45 degrees ================================================================
-      // Check if a Block to the SOUTH in 45 degrees to the top of the player is a crafted block
-      craftedBlockSOUTHdiagonal = SOUTHdiagnoalHasCraftedBlock(playerLoc);
-      // Check WEST 45 degrees ================================================================
-      // Check if a Block to the WEST in 45 degrees to the top of the player is a crafted block
-      craftedBlockWESTdiagonal = WESTdiagnoalHasCraftedBlock(playerLoc);
+         // Check TOP ========================================================
+         // Check if a Block straight to the TOP of the player is a crafted block
+         craftedBlockTOP = TOPhasCraftedBlock(entityLoc);
 
-      // Check NORTH ========================================================================================
-      // Check if a Block to the NORTH of the player is a crafted block (block on foot and head level needed)
-      craftedBlockNORTH = NORTHhasCraftedBlock(playerLoc);
-      // Check EAST =========================================================================================
-      // Check if a Block to the EAST of the player is a crafted block (block on foot and head level needed)
-      craftedBlockEAST = EASThasCraftedBlock(playerLoc);
-      // Check SOUTH ========================================================================================
-      // Check if a Block to the SOUTH of the player is a crafted block (block on foot and head level needed)
-      craftedBlockSOUTH = SOUTHhasCraftedBlock(playerLoc);
-      // Check WEST =========================================================================================
-      // Check if a Block to the WEST of the player is a crafted block (block on foot and head level needed)
-      craftedBlockWEST = WESThasCraftedBlock(playerLoc);
+         // Check NORTH 45 degrees ================================================================
+         // Check if a Block to the NORTH in 45 degrees to the top of the player is a crafted block
+         craftedBlockNORTHdiagonal = NORTHdiagnoalHasCraftedBlock(entityLoc);
+         // Check EAST 45 degrees ================================================================
+         // Check if a Block to the EAST in 45 degrees to the top of the player is a crafted block
+         craftedBlockEASTdiagonal = EASTdiagnoalHasCraftedBlock(entityLoc);
+         // Check SOUTH 45 degrees ================================================================
+         // Check if a Block to the SOUTH in 45 degrees to the top of the player is a crafted block
+         craftedBlockSOUTHdiagonal = SOUTHdiagnoalHasCraftedBlock(entityLoc);
+         // Check WEST 45 degrees ================================================================
+         // Check if a Block to the WEST in 45 degrees to the top of the player is a crafted block
+         craftedBlockWESTdiagonal = WESTdiagnoalHasCraftedBlock(entityLoc);
 
-      // Gather all results and combine them
-      if(craftedBlockTOP &&
-            craftedBlockNORTHdiagonal &&
-            craftedBlockEASTdiagonal &&
-            craftedBlockSOUTHdiagonal &&
-            craftedBlockWESTdiagonal &&
-            craftedBlockNORTH &&
-            craftedBlockEAST &&
-            craftedBlockSOUTH &&
-            craftedBlockWEST) // player is surrounded (as far as evaluated) with valid isolating crafted blocks
-      {
-         playerIsOutside = false;
-         if((Arctica.debug) || player.hasPermission("arctica.debug")) player.sendMessage(ChatColor.AQUA + "Du bist im Innenbereich.");
+         // Check NORTH ========================================================================================
+         // Check if a Block to the NORTH of the player is a crafted block (block on foot and head level needed)
+         craftedBlockNORTH = NORTHhasCraftedBlock(entityLoc);
+         // Check EAST =========================================================================================
+         // Check if a Block to the EAST of the player is a crafted block (block on foot and head level needed)
+         craftedBlockEAST = EASThasCraftedBlock(entityLoc);
+         // Check SOUTH ========================================================================================
+         // Check if a Block to the SOUTH of the player is a crafted block (block on foot and head level needed)
+         craftedBlockSOUTH = SOUTHhasCraftedBlock(entityLoc);
+         // Check WEST =========================================================================================
+         // Check if a Block to the WEST of the player is a crafted block (block on foot and head level needed)
+         craftedBlockWEST = WESThasCraftedBlock(entityLoc);
+
+         // Gather all results and combine them
+         if(craftedBlockTOP &&
+               craftedBlockNORTHdiagonal &&
+               craftedBlockEASTdiagonal &&
+               craftedBlockSOUTHdiagonal &&
+               craftedBlockWESTdiagonal &&
+               craftedBlockNORTH &&
+               craftedBlockEAST &&
+               craftedBlockSOUTH &&
+               craftedBlockWEST) // player is surrounded (as far as evaluated) with valid isolating crafted blocks
+         {
+            entityIsOutside = false;
+            if(null != player)
+            {
+               if((Arctica.debug) || player.hasPermission("arctica.debug")) player.sendMessage(ChatColor.AQUA + "Du bist im Innenbereich.");   
+            }         
+         }
+         else
+         {
+            entityIsOutside = true;
+            if(null != player)
+            {
+               if((Arctica.debug) || player.hasPermission("arctica.debug")) player.sendMessage(ChatColor.AQUA + "Craftbloecke: T: " + craftedBlockTOP + " |N: " + craftedBlockNORTH + " |N45: " + craftedBlockNORTHdiagonal + " |E: " + craftedBlockEAST + " |E45: " + craftedBlockEASTdiagonal + " |S: " + craftedBlockSOUTH + " |S45: " + craftedBlockSOUTHdiagonal + " |W: " + craftedBlockWEST + " |W45: " + craftedBlockWESTdiagonal);
+               if((Arctica.debug) || player.hasPermission("arctica.debug")) player.sendMessage(ChatColor.AQUA + "Du bist im Freien.");
+            }
+         }
       }
-      else
-      {
-         playerIsOutside = true;
-         if((Arctica.debug) || player.hasPermission("arctica.debug")) player.sendMessage(ChatColor.AQUA + "Craftbloecke: T: " + craftedBlockTOP + " |N: " + craftedBlockNORTH + " |N45: " + craftedBlockNORTHdiagonal + " |E: " + craftedBlockEAST + " |E45: " + craftedBlockEASTdiagonal + " |S: " + craftedBlockSOUTH + " |S45: " + craftedBlockSOUTHdiagonal + " |W: " + craftedBlockWEST + " |W45: " + craftedBlockWESTdiagonal);
-         if((Arctica.debug) || player.hasPermission("arctica.debug")) player.sendMessage(ChatColor.AQUA + "Du bist im Freien.");
-      }
 
-      return(playerIsOutside);
+      return(entityIsOutside);
    }
 
    boolean TOPhasCraftedBlock(Location startLocation)
@@ -846,18 +1098,25 @@ public class ArcSchedulerHandler
       return (res);
    }
 
-   boolean checkIfNearWarmthSource(Player player)
+   boolean checkIfNearWarmthSource(LivingEntity entity)
    {
-      boolean playerIsNearWarmthSource = false;
+      boolean entityIsNearWarmthSource = false;
 
-      if(null != player)
+      if(null != entity)
       {
-         Location playerLoc = player.getLocation();
+         Player player = null;
+
+         if(entity instanceof Player)
+         {
+            player = (Player)entity;   
+         }
+
+         Location playerLoc = entity.getLocation();
          int playerLoc_x = playerLoc.getBlockX();
          int playerLoc_y = playerLoc.getBlockY();
          int playerLoc_z = playerLoc.getBlockZ();
 
-         World world = player.getWorld();
+         World world = entity.getWorld();
 
          // Bigger cubes come first!
          // Set search cube for (burning) Furnace ==============================================================================
@@ -882,9 +1141,12 @@ public class ArcSchedulerHandler
 
          // ====================================================================================================================
 
-         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "SpielerPos: " + playerLoc.getBlockX() + ", " + playerLoc.getBlockY() + ", " + playerLoc.getBlockZ());
-         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 1: " + x1 + ", " + y1 + ", " + z1);
-         //if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 2: " + x2 + ", " + y2 + ", " + z2);
+         /*if(null != player)
+         {
+            if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "SpielerPos: " + playerLoc.getBlockX() + ", " + playerLoc.getBlockY() + ", " + playerLoc.getBlockZ());
+            if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 1: " + x1 + ", " + y1 + ", " + z1);
+            if(Arctica.debug) player.sendMessage(ChatColor.AQUA + "Ecke 2: " + x2 + ", " + y2 + ", " + z2);
+         }*/
 
          // init check radius with (biggest) check cube values (in this case: fire)
          int x1 = fire_x1;
@@ -894,17 +1156,20 @@ public class ArcSchedulerHandler
          int z1 = fire_z1;
          int z2 = fire_z2;
 
-         playerIsNearWarmthSource = warmthSourceFoundInArea(world, x1, x2, y1, y2, z1, z2, furnace_x1, furnace_x2, furnace_y1, furnace_y2, furnace_z1, furnace_z2);
+         entityIsNearWarmthSource = warmthSourceFoundInArea(world, x1, x2, y1, y2, z1, z2, furnace_x1, furnace_x2, furnace_y1, furnace_y2, furnace_z1, furnace_z2);
 
-         if(playerIsNearWarmthSource)
+         if(entityIsNearWarmthSource)
          {
-            if(Arctica.debug || player.hasPermission("arctica.debug"))
+            if(null != player)
             {
-               player.sendMessage(ChatColor.AQUA + "Waermequelle gefunden.");
+               if(Arctica.debug || player.hasPermission("arctica.debug"))
+               {
+                  player.sendMessage(ChatColor.AQUA + "Waermequelle gefunden.");
+               }
             }
          }
       }
-      return(playerIsNearWarmthSource);
+      return(entityIsNearWarmthSource);
    }
 
    boolean warmthSourceFoundInArea(World world, int x1, int x2, int y1, int y2, int z1, int z2, int furnace_x1, int furnace_x2, int furnace_y1, int furnace_y2, int furnace_z1, int furnace_z2)
@@ -956,21 +1221,21 @@ public class ArcSchedulerHandler
       return (res);
    }
 
-   boolean checkIfInWater(Player player)
+   boolean checkIfInWater(LivingEntity entity)
    {
-      boolean playerIsInWater = false;
+      boolean entityIsInWater = false;
 
-      if(null != player)
+      if(null != entity)
       {
-         Material mat = player.getLocation().getBlock().getType();
+         Material mat = entity.getLocation().getBlock().getType();
 
          if(mat == Material.STATIONARY_WATER || mat == Material.WATER)
          {
-            playerIsInWater = true;
+            entityIsInWater = true;
          }
       }
 
-      return (playerIsInWater);
+      return (entityIsInWater);
    }   
 
    // this does not use Minecrafts "flammable" marker! It checks if the block is a valid fueling material for fire.

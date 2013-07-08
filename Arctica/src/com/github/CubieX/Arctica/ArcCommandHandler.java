@@ -58,12 +58,14 @@ public class ArcCommandHandler implements CommandExecutor
                         
                         if (null != sender)
                         {
-                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Debug-Info-Mode: " + ChatColor.WHITE + Arctica.debug);
-                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Safe Mode: " + ChatColor.WHITE + Arctica.safemode);                             
+                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Debug-Info-Modus: " + ChatColor.WHITE + Arctica.debug);
+                            sender.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Sicherer Modus: " + ChatColor.WHITE + Arctica.safemode);                             
                             
                             if(null != player)
                             {
-                                player.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Biome: " + ChatColor.WHITE + player.getWorld().getBiome((int)player.getLocation().getX(), (int)player.getLocation().getZ()).toString());
+                                player.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Biom: " + ChatColor.WHITE + player.getWorld().getBiome((int)player.getLocation().getX(), (int)player.getLocation().getZ()).toString());                                                                                               
+                                player.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Kaltes Biom: " + ChatColor.WHITE + plugin.posIsWithinColdBiome((int)player.getLocation().getX(), (int)player.getLocation().getZ()));
+                                player.sendMessage(Arctica.logPrefix + ChatColor.AQUA + "Bist du betroffen: " + ChatColor.WHITE + plugin.playerIsAffected(player));
                             }
                         }
                     }

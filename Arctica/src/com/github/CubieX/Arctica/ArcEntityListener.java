@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -61,27 +62,29 @@ public class ArcEntityListener implements Listener
    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true) // event has NORMAL priority and will be skipped if it has been cancelled before
    public void onColdDamage(ColdDamageEvent event)
    {
-      Player victim = null;
+      Player victimPlayer = null;
+      Horse victimMount = null;
       int damageToApply = event.getDamageToApply();
 
       try
       {
-         if(null != event.getAfflictedPlayer())
+         if(null != event.getAfflictedEntity())
          {
-            if((event.getAfflictedPlayer() instanceof Player) &&
-                  (!event.getAfflictedPlayer().isDead()))
+            // VICTIM == PLAYER ============================================================
+            if((event.getAfflictedEntity() instanceof Player) &&
+                  (!event.getAfflictedEntity().isDead()))
             {
-               victim = event.getAfflictedPlayer();
+               victimPlayer = (Player)event.getAfflictedEntity();
 
-               if(!victim.hasPermission("arctica.debug"))
+               if(!victimPlayer.hasPermission("arctica.debug"))
                {
-                  if((victim.getHealth() - damageToApply) >= 1)
+                  if((victimPlayer.getHealth() - damageToApply) >= 1)
                   {
-                     victim.setHealth(victim.getHealth() - damageToApply);
+                     victimPlayer.setHealth(victimPlayer.getHealth() - damageToApply);
                   }
                   else if(Arctica.safemode)
                   {
-                     victim.setHealth(1);
+                     victimPlayer.setHealth(1);
                   }
                   else
                   {
@@ -89,18 +92,48 @@ public class ArcEntityListener implements Listener
                      if(plugin.getConfig().getBoolean("clearInventoryOnDeath"))
                      {
                         // TODO keep some specified items??
-                        victim.getInventory().clear();
+                        victimPlayer.getInventory().clear();
                      }
-                     victim.setHealth(0);
+                     victimPlayer.setHealth(0);
                   }   
                } // if player has debug permission, don't apply the calculated damage, but send debug message
 
                if(0 < damageToApply)
                {
-                  if(Arctica.debug || victim.hasPermission("arctica.debug"))
+                  if(Arctica.debug || victimPlayer.hasPermission("arctica.debug"))
                   {
-                     victim.sendMessage(ChatColor.AQUA + "" + damageToApply + " Kaelteschaden erhalten.");
+                     victimPlayer.sendMessage(ChatColor.AQUA + "" + damageToApply + " Kaelteschaden erhalten.");
                   }
+               }
+            }
+
+            // VICTIM == MOUNT (Tamed Horse, Donkey, Mule) =========================
+            if((event.getAfflictedEntity() instanceof Horse)) // Horse can be Horse, Donkey, Mule (see attributes)
+            {
+               if(!event.getAfflictedEntity().isDead())
+               {
+                  victimMount = (Horse)event.getAfflictedEntity();
+
+                  if((victimMount.getHealth() - damageToApply) >= 1)
+                  {
+                     victimMount.setHealth(victimMount.getHealth() - damageToApply);
+                  }
+                  else if(Arctica.safemode)
+                  {
+                     victimMount.setHealth(1);
+                  }
+                  else
+                  {
+                     // mount will die, so if configured, delete its inventory before its items get dropped when it dies
+                     if(plugin.getConfig().getBoolean("clearInventoryOnDeath"))
+                     {
+                        // TODO keep some specified items??
+                        // TODO clear inventory of mount (if chested donkey or chested mule)
+                        /*if(victimMount.get)
+                           victimMount.getInventory().clear();*/
+                     }
+                     victimMount.setHealth(0);
+                  }                  
                }
             }
          }
@@ -108,7 +141,6 @@ public class ArcEntityListener implements Listener
       catch(Exception ex)
       {
          Arctica.log.info(Arctica.logPrefix + ex.getMessage());
-         // player is probably no longer online 
       }
    }
 

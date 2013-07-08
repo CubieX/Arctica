@@ -1,5 +1,14 @@
 Changelog for Arctica by CubieX
 --------------------------------
+
+V1.5.0
+- added handling of ColdDamage for tamed mounts (horse, donkey, mule) -> Horse class not fully supportet by Bukkit yet (build 2807)
+  So Horse handling not functional yet.
+- made ColdDamage event and event handler ready for handling players and mounts
+- improved timer logic to handle defined amount of players each tick (applyColdDamageTimer now free running, but only on-demand)
+- added a separate damage task for handling mounts
+- build against CB 1.6.1-R0.1
+
 V1.4.1
 - BugFix: fireList.yml now gets properly read on first load
 

@@ -29,9 +29,9 @@ public class ArcConfigHandler
       plugin.getConfig(); //re-reads config out of memory. (Reads the config from file only, when invoked the first time!)
 
       // fire list
-      reloadfireListFile(); // load file from disk and create objects
-      saveFireListDefaultFile(); // creates a copy of the provided direList.yml
-      reloadfireListFile(); // load file again after it is physically present now
+      reloadFireListFile(); // load file from disk and create objects
+      saveFireListDefaultFile(); // creates a copy of the provided fireList.yml
+      reloadFireListFile(); // load file again after it is physically present now
    }
 
    /*private void saveConfig() //saves the config to disc (needed when entries have been altered via the plugin in-game)
@@ -46,7 +46,7 @@ public class ArcConfigHandler
       plugin.reloadConfig();
       plugin.getConfig(); // new assignment necessary when returned value is assigned to a variable or static field(!)
 
-      reloadfireListFile();
+      reloadFireListFile();
 
       plugin.readConfigValues();
 
@@ -58,7 +58,7 @@ public class ArcConfigHandler
    // =========================
 
    // reload from disk
-   public void reloadfireListFile()
+   public void reloadFireListFile()
    {
       if (fireListFile == null)
       {
@@ -80,7 +80,7 @@ public class ArcConfigHandler
    {
       if (fireListCfg == null)
       {
-         this.reloadfireListFile();
+         this.reloadFireListFile();
       }
       return fireListCfg;
    }
