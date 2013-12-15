@@ -256,7 +256,7 @@ public class ArcSchedulerHandler
                boolean currPlayerIsNearFire = false;
                boolean currPlayerIsInWater = false;
                boolean currPlayerIsHoldingTorch = false;
-               int realDamageToApply = 0;
+               double realDamageToApply = 0;
                int handledPlayersThisTick = 0;
 
                double baseDamageInWaterToApply = 0.0;
@@ -379,14 +379,14 @@ public class ArcSchedulerHandler
                            }                             
 
                            // Combined calculation. Some values will be 0, depending on above evaluation
-                           realDamageToApply = (int)Math.ceil(((
+                           realDamageToApply = ((
                                  baseDamageInAirToApply +
                                  extraDamageInAirWhenOutsideToApply +
                                  baseDamageInWaterToApply +
                                  extraDamageInWaterWhenOutsideToApply) *
                                  (1.0 - warmthBonusFactorToApply) *
                                  (1.0 - torchBonusFactorToApply) *                                            
-                                 (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer))));
+                                 (1.0 - plugin.getDamageReduceFactorFromCloth(currPlayer)));
                         }
 
                         // fire custom damage event ================================================                                
@@ -395,12 +395,7 @@ public class ArcSchedulerHandler
                         //==========================================================================                                                           
                         handledPlayersThisTick++; // a player was handled. Increase counter for current tick.
                         handledPlayers++; // a player was handled. Increase counter for playersToAffect list.   }
-                     } // end if NULL currPlayer check
-                     else
-                     {
-                        // player is probably no longer online
-
-                     } // end if/else NULL currPlayer check
+                     } // end if NULL currPlayer check                     
                   } // end if Handled players count check 
                   else
                   {
@@ -432,7 +427,7 @@ public class ArcSchedulerHandler
                boolean currMountIsNearFire = false;
                boolean currMountIsInWater = false;
 
-               int realDamageToApply = 0;
+               double realDamageToApply = 0;
                int handledMountsThisTick = 0;
 
                double baseDamageInWaterToApply = 0.0;
@@ -447,7 +442,7 @@ public class ArcSchedulerHandler
                   {*/
                   if((handledMountsThisTick < mountsToAffectCount) &&
                         (handledMountsThisTick < mountsToHandleEachTick))
-                  {                        
+                  {
                      currMount = mountsList[currMountIndex];
 
                      if(null != currMount)
@@ -492,7 +487,7 @@ public class ArcSchedulerHandler
                                  }
                               }
                            }
-                           else // player is in air
+                           else // mount is in air
                            {
                               /*
                                                      [syntax = java]
@@ -542,13 +537,13 @@ public class ArcSchedulerHandler
                            }                             
 
                            // Combined calculation. Some values will be 0, depending on above evaluation
-                           realDamageToApply = (int)Math.ceil(((
+                           realDamageToApply = ((
                                  baseDamageInAirToApply +
                                  extraDamageInAirWhenOutsideToApply +
                                  baseDamageInWaterToApply +
                                  extraDamageInWaterWhenOutsideToApply) *
                                  (1.0 - warmthBonusFactorToApply) *                                    
-                                 (1.0 - plugin.getDamageReduceFactorFromCloth(currMount))));
+                                 (1.0 - plugin.getDamageReduceFactorFromCloth(currMount)));
                         }
 
                         // fire custom damage event ================================================                                
@@ -557,12 +552,7 @@ public class ArcSchedulerHandler
                         //==========================================================================                                                           
                         handledMountsThisTick++; // a mount was handled. Increase counter for current tick.
                         handledMounts++; // a mount was handled. Increase counter for mountsToAffect list.   }
-                     } // end if NULL currMount check
-                     else
-                     {
-                        // mount is probably no longer online
-
-                     } // end if/else NULL currMount check
+                     } // end if NULL currMount check                     
                   } // end if handled mounts count check 
                   else
                   {
@@ -1124,9 +1114,9 @@ public class ArcSchedulerHandler
          int furnace_y1 = playerLoc_y - Arctica.verticalFurnaceSearchRadius;
          int furnace_z1 = playerLoc_z - Arctica.horizontalFurnaceSearchRadius;
 
-         int furnace_x2 = playerLoc_x + (Arctica.horizontalFurnaceSearchRadius); //second corner of cube to check (the other diagonal corner)
-         int furnace_y2 = playerLoc_y + (Arctica.verticalFurnaceSearchRadius);
-         int furnace_z2 = playerLoc_z + (Arctica.horizontalFurnaceSearchRadius);
+         int furnace_x2 = playerLoc_x + Arctica.horizontalFurnaceSearchRadius; //second corner of cube to check (the other diagonal corner)
+         int furnace_y2 = playerLoc_y + Arctica.verticalFurnaceSearchRadius;
+         int furnace_z2 = playerLoc_z + Arctica.horizontalFurnaceSearchRadius;
 
          // =====================================================================================================================
 
@@ -1135,9 +1125,9 @@ public class ArcSchedulerHandler
          int fire_y1 = playerLoc_y - Arctica.verticalFireSearchRadius;
          int fire_z1 = playerLoc_z - Arctica.horizontalFireSearchRadius;
 
-         int fire_x2 = playerLoc_x + (Arctica.horizontalFireSearchRadius); //second corner of cube to check (the other diagonal corner)
-         int fire_y2 = playerLoc_y + (Arctica.verticalFireSearchRadius);
-         int fire_z2 = playerLoc_z + (Arctica.horizontalFireSearchRadius);
+         int fire_x2 = playerLoc_x + Arctica.horizontalFireSearchRadius; //second corner of cube to check (the other diagonal corner)
+         int fire_y2 = playerLoc_y + Arctica.verticalFireSearchRadius;
+         int fire_z2 = playerLoc_z + Arctica.horizontalFireSearchRadius;
 
          // ====================================================================================================================
 
@@ -1176,11 +1166,11 @@ public class ArcSchedulerHandler
    {
       boolean success = false;
 
-      for (int checkedX = x1; checkedX < x2; checkedX++)
+      for (int checkedX = x1; checkedX <= x2; checkedX++)
       {
-         for (int checkedY = y1; checkedY < y2; checkedY++)
+         for (int checkedY = y1; checkedY <= y2; checkedY++)
          {
-            for (int checkedZ = z1; checkedZ < z2; checkedZ++)
+            for (int checkedZ = z1; checkedZ <= z2; checkedZ++)
             {
                // look for fire in fire check cube (which includes the smaller cubes)
                if(warmBlocksIDlist.FIRE.toString() == world.getBlockAt(checkedX, checkedY, checkedZ).getType().toString())

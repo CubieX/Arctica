@@ -1,32 +1,34 @@
 Changelog for Arctica by CubieX
 --------------------------------
+V1.5.1
+- fixed warmth source radius check
+- build against bukkit 1.7.2 R0.1 DEV
 
-V1.5.0
-- added handling of ColdDamage for tamed mounts (horse, donkey, mule) -> Horse class not fully supportet by Bukkit yet (build 2807)
-  So Horse handling not functional yet.
+V.1.5.0
+- added handling of ColdDamage for tamed mounts (horse, donkey, mule)
 - made ColdDamage event and event handler ready for handling players and mounts
 - improved timer logic to handle defined amount of players each tick (applyColdDamageTimer now free running, but only on-demand)
 - added a separate damage task for handling mounts
 - build against CB 1.6.1-R0.1
 
-V1.4.1
+V.1.4.1
 - BugFix: fireList.yml now gets properly read on first load
 
-V1.4.0
+V.1.4.0
 - players with a Gamemode other than "Survival" will be excluded from the damage application
 - config now has an option to decide, whether or not a player that dies from cold damage should
   loose his inventory entirely (= no items will be dropped to be picked up later)
 - jail function can be deactivated by setting "minJailDuration" to "0" in config
 
-V1.3.3
+V.1.3.3
 - removed condition for not suffering damage: now it's triggered when
 inside near fire, regardless if in water or not.
 
-V1.3.2
+V.1.3.2
 - changed cold damage calculation. Now players inside a shelter & not in water & near fire will never suffer cold damage.
   Calculation will be omitted in this case and result set to 0, regardless of other environmental states.
 
-V1.3.1
+V.1.3.1
 - added additional debug message for applied damage for players with arctica.debug permission
 - players with arctica.debug permission will NOT suffer cold damage. But it will be calculated and send as debug message.
 
@@ -52,9 +54,9 @@ V.1.2.0-R1
 - added Essentials to dependencies
 - added jail related options to config file
 
-V. 1.1.0
+V.1.1.0
 - added fire fueling mechanism
 
-V. 0.1 / V 1.0.0
+V.0.1 / V 1.0.0
 - Initial version
 - Tagged as V1.0.0 !

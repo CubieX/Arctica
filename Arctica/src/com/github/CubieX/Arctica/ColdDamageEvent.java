@@ -8,16 +8,16 @@ public class ColdDamageEvent extends Event
 {
     private static final HandlerList handlers = new HandlerList();
     private static LivingEntity victim = null;
-    private static int damageToApply = 0;
+    private static double damageToApply = 0;
  
     //Constructor
-    public ColdDamageEvent(LivingEntity victim, int damageToApply)
+    public ColdDamageEvent(LivingEntity victim, double damageToApply)
     {
         ColdDamageEvent.victim = victim;
         ColdDamageEvent.damageToApply = damageToApply;
     }
     
-    public int getDamageToApply()
+    public double getDamageToApply()
     {
        return (damageToApply);
     }

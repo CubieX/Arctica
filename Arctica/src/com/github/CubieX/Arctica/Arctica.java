@@ -1,8 +1,18 @@
+/*
+ * Arctica - A CraftBukkit plugin that adds an arctic challange to the game
+ * Copyright (C) 2013  CubieX
+ * 
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License along with this program; if not,
+ * see <http://www.gnu.org/licenses/>.
+ */
 package com.github.CubieX.Arctica;
 
 import java.util.Calendar;
 import java.util.logging.Logger;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
@@ -19,7 +29,7 @@ public class Arctica extends JavaPlugin
    private ArcSchedulerHandler schedHandler = null;
    private ArcCommandHandler comHandler = null;
 
-   public static final Logger log = Logger.getLogger("Minecraft");
+   public static final Logger log = Bukkit.getServer().getLogger();
    static final String logPrefix = "[Arctica] "; // Prefix to go in front of all log entries
    
    public enum fuelGroups {NONE, WOOL, CRAFTED_WOOD, LOG, COAL_ORE};
@@ -293,7 +303,7 @@ public class Arctica extends JavaPlugin
       if(entity.getType() == EntityType.HORSE)
       {
          /*Horse mount = (Horse)entity;*/
-         //TODO check if mount is a "normal" horse
+         //TODO check if mount is a "normal" horse         
          //TODO check if horse has armor equipped and calculate damage reduction
          
          //TODO check if mount is a donkey or mule and if so, set a predefined damage reduction

@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -64,7 +66,7 @@ public class ArcEntityListener implements Listener
    {
       Player victimPlayer = null;
       Horse victimMount = null;
-      int damageToApply = event.getDamageToApply();
+      double damageToApply = event.getDamageToApply();
 
       try
       {
@@ -254,10 +256,10 @@ public class ArcEntityListener implements Listener
    //================================================================================================
    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
    public void onPlayerInteract(PlayerInteractEvent event)
-   {
-      if(plugin.posIsWithinColdBiome(event.getPlayer().getTargetBlock(null, 5).getX(), event.getPlayer().getTargetBlock(null, 5).getZ()))
-      {         
-         if(event.getAction() == Action.LEFT_CLICK_BLOCK)
+   {               
+      if(event.getAction() == Action.LEFT_CLICK_BLOCK)
+      {
+         if(plugin.posIsWithinColdBiome(event.getPlayer().getTargetBlock(null, 5).getX(), event.getPlayer().getTargetBlock(null, 5).getZ()))
          {
             Block targetedBlock = event.getPlayer().getTargetBlock(null, 5); // first arg is transparent block, second arg is maxDistance to scan. 5 is default reach for players.
 
@@ -316,6 +318,26 @@ public class ArcEntityListener implements Listener
          if(Arctica.minJailDuration > 0)
          {
             plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), "tjail " + event.getEntity().getPlayer().getName() + " " + Arctica.jailName + " " + Arctica.minJailDuration + "m");
+         }
+      }
+   }
+
+   //================================================================================================
+   @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+   public void onEntityDamageByEntity(EntityDamageByEntityEvent event)
+   {
+      if(Arctica.debug)
+      {
+         if(event.getDamager() instanceof Player)
+         {
+            if(event.getEntityType() == EntityType.HORSE)
+            {
+               Horse horse = (Horse) event.getEntity();
+               Player damager = (Player) event.getDamager();
+
+               Arctica.log.info(Arctica.logPrefix + "Health: " + String.format("%1$.2f",horse.getHealth()) + " HP of " + String.format("%1$.2f", horse.getMaxHealth()) + " HP" );
+               damager.sendMessage("Health: " + String.format("%1$.2f",horse.getHealth()) + " HP of " + String.format("%1$.2f", horse.getMaxHealth()) + " HP" );
+            }
          }
       }
    }

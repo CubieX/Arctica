@@ -41,6 +41,6 @@ minJailDuration: 1
 # jail duration (Maximum. (0-60 in minutes) The used duration depends on the amount of deaths of a player.
 # hast to be equal or greater than minJailDuration
 maxJailDuration: 5
-# A player that dies from cold damage will loose his inventory if set to 'true'.
-# No items will be dropped. His inventory will be lost.
+# A player or mount that dies from cold damage will loose the inventory if set to 'true'.
+# No items will be dropped. The inventory will be lost.
 clearInventoryOnDeath: false
